@@ -1,3 +1,4 @@
+import { bilingual } from '../i18n';
 import { ITEM_BY_ID } from './catalog';
 import type { DeptId, PlacedItem, RoomId, Rot } from './types';
 
@@ -41,14 +42,16 @@ export interface Expansion {
   /** Monedas acumuladas en el fondo para construirla. */
   cost: number;
   desc: string;
+  en?: { desc: string };
 }
 
 /** Ampliaciones en orden: cada una se construye al llegar el fondo a su costo. */
 export const EXPANSIONS: Expansion[] = [
-  { room: { id: 'terraza', rect: { x: 0, y: 28, w: 24, h: 8 } }, cost: 2500, desc: 'Pasto, quitasoles, hamacas y aire libre.' },
-  { room: { id: 'juegos', rect: { x: 24, y: 28, w: 12, h: 8 } }, cost: 5500, desc: 'Ping-pong, pool, taca-taca y rockola.' },
-  { room: { id: 'mirador', rect: { x: 36, y: 11, w: 8, h: 17 } }, cost: 9000, desc: 'Un lounge elegante con vista a la ciudad.' },
+  { room: { id: 'terraza', rect: { x: 0, y: 28, w: 24, h: 8 } }, cost: 2500, desc: 'Pasto, quitasoles, hamacas y aire libre.', en: { desc: 'Grass, umbrellas, hammocks and fresh air.' } },
+  { room: { id: 'juegos', rect: { x: 24, y: 28, w: 12, h: 8 } }, cost: 5500, desc: 'Ping-pong, pool, taca-taca y rockola.', en: { desc: 'Ping-pong, pool, foosball and a jukebox.' } },
+  { room: { id: 'mirador', rect: { x: 36, y: 11, w: 8, h: 17 } }, cost: 9000, desc: 'Un lounge elegante con vista a la ciudad.', en: { desc: 'An elegant lounge with a view of the city.' } },
 ];
+bilingual(EXPANSIONS);
 
 /** Cuántas ampliaciones están construidas (lo fija el estado del juego al cargar y al cambiar). */
 let builtLevel = 0;

@@ -5,11 +5,12 @@ import { useGame } from '../data/store';
 import type { ChatMessage, Employee } from '../data/types';
 import { AvatarImg, Panel, toast } from './common';
 import { Icon } from './icons';
+import { L, intlLocale } from '../i18n';
 
 const QUICK = ['👋', '😄', '👍', '🎉', '☕', '💪', '🔥', '❤️', '🙌', '🤝'];
 
-const timeFmt = new Intl.DateTimeFormat('es-CL', { hour: '2-digit', minute: '2-digit' });
-const dayFmt = new Intl.DateTimeFormat('es-CL', { weekday: 'long', day: 'numeric', month: 'short' });
+const timeFmt = new Intl.DateTimeFormat(intlLocale(), { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
+const dayFmt = new Intl.DateTimeFormat(intlLocale(), { weekday: 'long', day: 'numeric', month: 'short' });
 
 function Face({ e }: { e: Employee | undefined }) {
   return <span className="chat-face">{e && <AvatarImg avatar={e.avatar} size={1.4} />}</span>;
@@ -25,7 +26,7 @@ function Messages({ list, meId }: { list: ChatMessage[]; meId: string }) {
   let lastDay = '';
   return (
     <div className="chat-log">
-      {list.length === 0 && <p className="hint chat-empty">Todavía no hay mensajes. ¡Rompe el hielo! 👋</p>}
+      {list.length === 0 && <p className="hint chat-empty">{L('Todavía no hay mensajes. ¡Rompe el hielo! 👋', 'No messages yet. Break the ice! 👋')}</p>}
       {list.map((m, i) => {
         const e = employees[m.from];
         const mine = m.from === meId;
@@ -39,7 +40,7 @@ function Messages({ list, meId }: { list: ChatMessage[]; meId: string }) {
             <div className={`chat-msg ${mine ? 'chat-mine' : ''} ${grouped ? 'chat-grouped' : ''}`}>
               {!mine && (grouped ? <span className="chat-face chat-face-ghost" /> : <Face e={e} />)}
               <div className="chat-bubble">
-                {!mine && !grouped && <b style={{ color: e ? ROOMS[e.dept].color : undefined }}>{e?.name.split(' ')[0] ?? 'Ex colaborador'}</b>}
+                {!mine && !grouped && <b style={{ color: e ? ROOMS[e.dept].color : undefined }}>{e?.name.split(' ')[0] ?? L('Ex colaborador', 'Former team member')}</b>}
                 <span>{m.text}</span>
                 <small>{timeFmt.format(m.ts)}</small>
               </div>
@@ -75,14 +76,14 @@ function Composer({ to, placeholder }: { to?: string; placeholder: string }) {
     >
       <div className="chat-quick">
         {QUICK.map((q) => (
-          <button key={q} type="button" onClick={() => void send(q)} aria-label={`Enviar ${q}`}>
+          <button key={q} type="button" onClick={() => void send(q)} aria-label={L(`Enviar ${q}`, `Send ${q}`)}>
             {q}
           </button>
         ))}
       </div>
       <div className="chat-input-row">
         <input ref={input} className="input" maxLength={300} placeholder={placeholder} value={text} onChange={(e) => setText(e.target.value)} autoFocus />
-        <button className="btn btn-primary" disabled={busy || !text.trim()} aria-label="Enviar">
+        <button className="btn btn-primary" disabled={busy || !text.trim()} aria-label={L('Enviar', 'Send')}>
           <Icon name="send" size={18} />
         </button>
       </div>
@@ -119,18 +120,23 @@ export function ChatPanel({ onClose, initialWith }: { onClose: () => void; initi
     <Panel title="Chat" onClose={onClose}>
       <div className="tabs" role="tablist">
         <button role="tab" aria-selected={tab === 'general'} className={`tab ${tab === 'general' ? 'tab-on' : ''}`} onClick={() => setTab('general')}>
-          💬 General {chat.generalUnread > 0 && tab !== 'general' && <span className="tab-count">{chat.generalUnread}</span>}
+          💬 {L('General', 'General')} {chat.generalUnread > 0 && tab !== 'general' && <span className="tab-count">{chat.generalUnread}</span>}
         </button>
         <button role="tab" aria-selected={tab === 'private'} className={`tab ${tab === 'private' ? 'tab-on' : ''}`} onClick={() => setTab('private')}>
-          ✉️ Privados {dmUnread > 0 && <span className="tab-count">{dmUnread}</span>}
+          ✉️ {L('Privados', 'Private')} {dmUnread > 0 && <span className="tab-count">{dmUnread}</span>}
         </button>
       </div>
 
       {tab === 'general' && (
         <div className="chat-box">
-          <p className="hint">Lo lee todo el equipo, y tu mensaje aparece en un globo sobre tu personaje.</p>
+          <p className="hint">
+            {L(
+              'Lo lee todo el equipo, y tu mensaje aparece en un globo sobre tu personaje.',
+              'The whole team reads it, and your message pops up in a bubble over your character.',
+            )}
+          </p>
           <Messages list={chat.general} meId={meId} />
-          <Composer placeholder="Escribe al equipo…" />
+          <Composer placeholder={L('Escribe al equipo…', 'Write to the team…')} />
         </div>
       )}
 
@@ -148,7 +154,7 @@ export function ChatPanel({ onClose, initialWith }: { onClose: () => void; initi
                   </span>
                   <span className="contact-info">
                     <b>{e.name}</b>
-                    <small>{isOn ? 'Conectado' : e.title}</small>
+                    <small>{isOn ? L('Conectado', 'Online') : e.title}</small>
                   </span>
                   {(s?.unread ?? 0) > 0 && <span className="count-badge static">{s!.unread}</span>}
                 </button>
@@ -162,16 +168,16 @@ export function ChatPanel({ onClose, initialWith }: { onClose: () => void; initi
         <div className="chat-box">
           <div className="chat-peer">
             <button className="btn btn-small" onClick={() => setPeer(null)}>
-              ← Contactos
+              ← {L('Contactos', 'Contacts')}
             </button>
             <Face e={other} />
             <span>
-              <b>{other?.name ?? 'Colaborador'}</b>
-              <small>{online.includes(peer) ? ' · conectado' : ''}</small>
+              <b>{other?.name ?? L('Colaborador', 'Team member')}</b>
+              <small>{online.includes(peer) ? L(' · conectado', ' · online') : ''}</small>
             </span>
           </div>
           <Messages list={chat.dms[peer] ?? []} meId={meId} />
-          <Composer to={peer} placeholder={`Mensaje privado para ${other?.name.split(' ')[0] ?? ''}…`} />
+          <Composer to={peer} placeholder={L(`Mensaje privado para ${other?.name.split(' ')[0] ?? ''}…`, `Private message to ${other?.name.split(' ')[0] ?? ''}…`)} />
         </div>
       )}
     </Panel>

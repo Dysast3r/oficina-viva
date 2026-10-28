@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { updateAvatar } from '../data/store';
+import { L } from '../i18n';
 import type { Avatar, Employee } from '../data/types';
 import { AvatarImg } from './common';
 import { AvatarEditor } from './ProfilePanel';
@@ -12,9 +13,14 @@ export function CharacterSetup({ me }: { me: Employee }) {
     <div className="login">
       <div className="login-card setup-card">
         <h1 className="setup-title">
-          ¡{me.avatar.body === 1 ? 'Bienvenida' : 'Bienvenido'}, {me.name.split(' ')[0]}!
+          {L(`¡${me.avatar.body === 1 ? 'Bienvenida' : 'Bienvenido'}, ${me.name.split(' ')[0]}!`, `Welcome, ${me.name.split(' ')[0]}!`)}
         </h1>
-        <p className="login-sub">Antes de llegar a tu puesto, crea tu personaje. Puedes cambiarlo después desde tu perfil.</p>
+        <p className="login-sub">
+          {L(
+            'Antes de llegar a tu puesto, crea tu personaje. Puedes cambiarlo después desde tu perfil.',
+            'Before heading to your desk, create your character. You can change it later from your profile.',
+          )}
+        </p>
         <div className="setup-body">
           <div className="setup-preview">
             <AvatarImg avatar={avatar} size={5} />
@@ -23,7 +29,7 @@ export function CharacterSetup({ me }: { me: Employee }) {
           <AvatarEditor avatar={avatar} onChange={setAvatar} preview={false} />
         </div>
         <button className="btn btn-primary btn-block" onClick={() => updateAvatar(avatar)}>
-          ¡Listo, a la oficina!
+          {L('¡Listo, a la oficina!', 'Done, off to the office!')}
         </button>
       </div>
     </div>

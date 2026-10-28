@@ -4,6 +4,8 @@
  * comparten la oficina (luz, lluvia) y el reloj del HUD.
  */
 
+import { L } from '../i18n';
+
 export interface Weather {
   /** °C */
   temp: number;
@@ -30,20 +32,20 @@ export function skyOf(code: number): Sky {
   return 'clear';
 }
 
-const LABEL: Record<Sky, string> = {
-  clear: 'Despejado',
-  cloudy: 'Nublado',
-  fog: 'Neblina',
-  drizzle: 'Llovizna',
-  rain: 'Lluvia',
-  storm: 'Tormenta',
-  snow: 'Nieve',
+const LABEL: Record<Sky, [string, string]> = {
+  clear: ['Despejado', 'Clear'],
+  cloudy: ['Nublado', 'Cloudy'],
+  fog: ['Neblina', 'Fog'],
+  drizzle: ['Llovizna', 'Drizzle'],
+  rain: ['Lluvia', 'Rain'],
+  storm: ['Tormenta', 'Storm'],
+  snow: ['Nieve', 'Snow'],
 };
 
 export function weatherLabel(code: number): string {
-  if (code === 1) return 'Mayormente despejado';
-  if (code === 2) return 'Parcialmente nublado';
-  return LABEL[skyOf(code)];
+  if (code === 1) return L('Mayormente despejado', 'Mostly clear');
+  if (code === 2) return L('Parcialmente nublado', 'Partly cloudy');
+  return L(...LABEL[skyOf(code)]);
 }
 
 export function weatherIcon(code: number, night: boolean): string {

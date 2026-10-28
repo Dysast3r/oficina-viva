@@ -1,3 +1,4 @@
+import { L, bilingual } from '../i18n';
 import type { DeptId, RoomId } from './types';
 
 // ---------------------------------------------------------------------------
@@ -10,19 +11,21 @@ export interface RoomDef {
   /** Color de identidad: letrero, piso por defecto y acentos de UI. */
   color: string;
   floor: string;
+  en?: { name: string };
 }
 
 export const ROOMS: Record<RoomId, RoomDef> = {
-  gerencia: { id: 'gerencia', name: 'Gerencia', color: '#e0a64a', floor: 'parquet_oscuro' },
-  ventas: { id: 'ventas', name: 'Ventas', color: '#f08a3c', floor: 'porcelanato' },
-  contabilidad: { id: 'contabilidad', name: 'Contabilidad', color: '#3fbf7f', floor: 'porcelanato_claro' },
-  ti: { id: 'ti', name: 'TI', color: '#2cb8c4', floor: 'alfombra_oscura' },
-  reuniones: { id: 'reuniones', name: 'Reuniones', color: '#7c8cf0', floor: 'parquet' },
-  cafeteria: { id: 'cafeteria', name: 'Casino', color: '#d9824a', floor: 'porcelanato' },
-  terraza: { id: 'terraza', name: 'Terraza', color: '#5fbf6a', floor: 'cesped' },
-  juegos: { id: 'juegos', name: 'Sala de juegos', color: '#e86fa8', floor: 'ajedrez' },
-  mirador: { id: 'mirador', name: 'Mirador', color: '#7fc8f0', floor: 'marmol' },
+  gerencia: { id: 'gerencia', name: 'Gerencia', color: '#e0a64a', floor: 'parquet_oscuro', en: { name: 'Management' } },
+  ventas: { id: 'ventas', name: 'Ventas', color: '#f08a3c', floor: 'porcelanato', en: { name: 'Sales' } },
+  contabilidad: { id: 'contabilidad', name: 'Contabilidad', color: '#3fbf7f', floor: 'porcelanato_claro', en: { name: 'Accounting' } },
+  ti: { id: 'ti', name: 'TI', color: '#2cb8c4', floor: 'alfombra_oscura', en: { name: 'IT' } },
+  reuniones: { id: 'reuniones', name: 'Reuniones', color: '#7c8cf0', floor: 'parquet', en: { name: 'Meetings' } },
+  cafeteria: { id: 'cafeteria', name: 'Casino', color: '#d9824a', floor: 'porcelanato', en: { name: 'Cafeteria' } },
+  terraza: { id: 'terraza', name: 'Terraza', color: '#5fbf6a', floor: 'cesped', en: { name: 'Terrace' } },
+  juegos: { id: 'juegos', name: 'Sala de juegos', color: '#e86fa8', floor: 'ajedrez', en: { name: 'Game room' } },
+  mirador: { id: 'mirador', name: 'Mirador', color: '#7fc8f0', floor: 'marmol', en: { name: 'Lookout' } },
 };
+bilingual(Object.values(ROOMS));
 
 export const DEPTS: DeptId[] = ['gerencia', 'ventas', 'contabilidad', 'ti'];
 
@@ -41,20 +44,23 @@ export interface FloorDef {
   colors: [string, string];
   /** Solo para salas, no se vende. */
   roomOnly?: boolean;
+  en?: { name: string };
 }
 
 export const FLOORS: FloorDef[] = [
-  { id: 'parquet', name: 'Parquet', price: 120, level: 2, style: 6, pattern: 'wood', colors: ['#9a6a44', '#8c5f3c'] },
-  { id: 'alfombra_azul', name: 'Alfombra corporativa', price: 150, level: 2, style: 7, pattern: 'carpet', colors: ['#34497a', '#2e416e'] },
-  { id: 'cesped', name: 'Pasto sintético', price: 220, level: 3, style: 10, pattern: 'grass', colors: ['#4f9a40', '#448a37'] },
-  { id: 'ajedrez', name: 'Baldosa ajedrez', price: 260, level: 4, style: 12, pattern: 'checker', colors: ['#d8d2c4', '#2e2d36'] },
-  { id: 'parquet_oscuro', name: 'Parquet nogal', price: 320, level: 5, style: 15, pattern: 'wood', colors: ['#6e4630', '#623e2a'] },
-  { id: 'marmol', name: 'Mármol', price: 450, level: 6, style: 22, pattern: 'marble', colors: ['#e2e1e8', '#c7c6d2'] },
-  { id: 'oro', name: 'Piso de oro', price: 1400, level: 10, style: 60, pattern: 'tile', colors: ['#d9a83a', '#c4922a'] },
-  { id: 'porcelanato', name: 'Porcelanato', price: 0, level: 1, style: 0, pattern: 'tile', colors: ['#6f6862', '#655f59'], roomOnly: true },
-  { id: 'porcelanato_claro', name: 'Porcelanato claro', price: 0, level: 1, style: 0, pattern: 'tile', colors: ['#8a847c', '#807a72'], roomOnly: true },
-  { id: 'alfombra_oscura', name: 'Alfombra grafito', price: 0, level: 1, style: 0, pattern: 'carpet', colors: ['#3f4552', '#383e4a'], roomOnly: true },
+  { id: 'parquet', name: 'Parquet', price: 120, level: 2, style: 6, pattern: 'wood', colors: ['#9a6a44', '#8c5f3c'], en: { name: 'Parquet' } },
+  { id: 'alfombra_azul', name: 'Alfombra corporativa', price: 150, level: 2, style: 7, pattern: 'carpet', colors: ['#34497a', '#2e416e'], en: { name: 'Corporate carpet' } },
+  { id: 'cesped', name: 'Pasto sintético', price: 220, level: 3, style: 10, pattern: 'grass', colors: ['#4f9a40', '#448a37'], en: { name: 'Artificial grass' } },
+  { id: 'ajedrez', name: 'Baldosa ajedrez', price: 260, level: 4, style: 12, pattern: 'checker', colors: ['#d8d2c4', '#2e2d36'], en: { name: 'Checkerboard tile' } },
+  { id: 'parquet_oscuro', name: 'Parquet nogal', price: 320, level: 5, style: 15, pattern: 'wood', colors: ['#6e4630', '#623e2a'], en: { name: 'Walnut parquet' } },
+  { id: 'marmol', name: 'Mármol', price: 450, level: 6, style: 22, pattern: 'marble', colors: ['#e2e1e8', '#c7c6d2'], en: { name: 'Marble' } },
+  { id: 'oro', name: 'Piso de oro', price: 1400, level: 10, style: 60, pattern: 'tile', colors: ['#d9a83a', '#c4922a'], en: { name: 'Gold floor' } },
+  { id: 'porcelanato', name: 'Porcelanato', price: 0, level: 1, style: 0, pattern: 'tile', colors: ['#6f6862', '#655f59'], roomOnly: true, en: { name: 'Porcelain tile' } },
+  { id: 'porcelanato_claro', name: 'Porcelanato claro', price: 0, level: 1, style: 0, pattern: 'tile', colors: ['#8a847c', '#807a72'], roomOnly: true, en: { name: 'Light porcelain tile' } },
+  { id: 'alfombra_oscura', name: 'Alfombra grafito', price: 0, level: 1, style: 0, pattern: 'carpet', colors: ['#3f4552', '#383e4a'], roomOnly: true, en: { name: 'Graphite carpet' } },
 ];
+
+bilingual(FLOORS);
 
 export const FLOOR_BY_ID: Record<string, FloorDef> = Object.fromEntries(FLOORS.map((f) => [f.id, f]));
 
@@ -84,100 +90,99 @@ export interface ItemDef {
   /** Mobiliario de áreas comunes: no aparece en la tienda. */
   hidden?: boolean;
   desc: string;
+  en?: { name: string; desc?: string };
 }
 
 export const ITEMS: ItemDef[] = [
   // Muebles
-  { id: 'escritorio', name: 'Escritorio básico', category: 'muebles', price: 0, level: 1, style: 1, w: 2, d: 1, desc: 'Tu escritorio de siempre, con su PC.' },
-  { id: 'silla', name: 'Silla de oficina', category: 'muebles', price: 0, level: 1, style: 1, w: 1, d: 1, seat: true, desc: 'Cumple. Gira un poco.' },
-  { id: 'archivador', name: 'Archivador', category: 'muebles', price: 45, level: 1, style: 2, w: 1, d: 1, desc: 'Orden ante todo.' },
-  { id: 'puf', name: 'Puf', category: 'muebles', price: 70, level: 2, style: 4, w: 1, d: 1, desc: 'Para pensar con calma.' },
-  { id: 'estanteria', name: 'Estantería', category: 'muebles', price: 120, level: 2, style: 7, w: 1, d: 1, desc: 'Libros, manuales y normas técnicas.' },
-  { id: 'silla_ergo', name: 'Silla ergonómica', category: 'muebles', price: 180, level: 3, style: 9, w: 1, d: 1, seat: true, desc: 'Tu espalda te lo agradece.' },
-  { id: 'sofa', name: 'Sofá', category: 'muebles', price: 230, level: 3, style: 12, w: 2, d: 1, desc: 'Para recibir visitas con estilo.' },
-  { id: 'escritorio_pro', name: 'Escritorio pro', category: 'muebles', price: 320, level: 4, style: 16, w: 2, d: 1, desc: 'Doble monitor y madera noble.' },
-  { id: 'mesa_centro', name: 'Mesa de centro', category: 'muebles', price: 90, level: 2, style: 5, w: 1, d: 1, desc: 'Revistas, café y buenas ideas.' },
-  { id: 'biombo', name: 'Biombo japonés', category: 'muebles', price: 110, level: 2, style: 6, w: 1, d: 1, desc: 'Privacidad con estilo zen.' },
-  { id: 'sillon_cuero', name: 'Sillón de cuero', category: 'muebles', price: 200, level: 3, style: 11, w: 1, d: 1, desc: 'Cuero café, de directorio.' },
-  { id: 'escritorio_pie', name: 'Escritorio de pie', category: 'muebles', price: 280, level: 4, style: 14, w: 2, d: 1, desc: 'Trabaja de pie y estira las piernas.' },
+  { id: 'escritorio', name: 'Escritorio básico', category: 'muebles', price: 0, level: 1, style: 1, w: 2, d: 1, desc: 'Tu escritorio de siempre, con su PC.', en: { name: 'Basic desk', desc: 'Your trusty desk, PC included.' } },
+  { id: 'silla', name: 'Silla de oficina', category: 'muebles', price: 0, level: 1, style: 1, w: 1, d: 1, seat: true, desc: 'Cumple. Gira un poco.', en: { name: 'Office chair', desc: 'Does the job. Spins a little.' } },
+  { id: 'archivador', name: 'Archivador', category: 'muebles', price: 45, level: 1, style: 2, w: 1, d: 1, desc: 'Orden ante todo.', en: { name: 'Filing cabinet', desc: 'Order above all.' } },
+  { id: 'puf', name: 'Puf', category: 'muebles', price: 70, level: 2, style: 4, w: 1, d: 1, desc: 'Para pensar con calma.', en: { name: 'Pouf', desc: 'For thinking things through.' } },
+  { id: 'estanteria', name: 'Estantería', category: 'muebles', price: 120, level: 2, style: 7, w: 1, d: 1, desc: 'Libros, manuales y normas técnicas.', en: { name: 'Bookshelf', desc: 'Books, manuals and technical standards.' } },
+  { id: 'silla_ergo', name: 'Silla ergonómica', category: 'muebles', price: 180, level: 3, style: 9, w: 1, d: 1, seat: true, desc: 'Tu espalda te lo agradece.', en: { name: 'Ergonomic chair', desc: 'Your back will thank you.' } },
+  { id: 'sofa', name: 'Sofá', category: 'muebles', price: 230, level: 3, style: 12, w: 2, d: 1, desc: 'Para recibir visitas con estilo.', en: { name: 'Sofa', desc: 'For welcoming visitors in style.' } },
+  { id: 'escritorio_pro', name: 'Escritorio pro', category: 'muebles', price: 320, level: 4, style: 16, w: 2, d: 1, desc: 'Doble monitor y madera noble.', en: { name: 'Pro desk', desc: 'Dual monitors and fine wood.' } },
+  { id: 'mesa_centro', name: 'Mesa de centro', category: 'muebles', price: 90, level: 2, style: 5, w: 1, d: 1, desc: 'Revistas, café y buenas ideas.', en: { name: 'Coffee table', desc: 'Magazines, coffee and good ideas.' } },
+  { id: 'biombo', name: 'Biombo japonés', category: 'muebles', price: 110, level: 2, style: 6, w: 1, d: 1, desc: 'Privacidad con estilo zen.', en: { name: 'Japanese screen', desc: 'Privacy with a zen touch.' } },
+  { id: 'sillon_cuero', name: 'Sillón de cuero', category: 'muebles', price: 200, level: 3, style: 11, w: 1, d: 1, desc: 'Cuero café, de directorio.', en: { name: 'Leather armchair', desc: 'Brown leather, boardroom grade.' } },
+  { id: 'escritorio_pie', name: 'Escritorio de pie', category: 'muebles', price: 280, level: 4, style: 14, w: 2, d: 1, desc: 'Trabaja de pie y estira las piernas.', en: { name: 'Standing desk', desc: 'Work on your feet and stretch your legs.' } },
   // Plantas
-  { id: 'cactus', name: 'Cactus', category: 'plantas', price: 30, level: 1, style: 2, w: 1, d: 1, desc: 'Poco riego, mucha actitud.' },
-  { id: 'planta', name: 'Planta de interior', category: 'plantas', price: 40, level: 1, style: 3, w: 1, d: 1, desc: 'Un poco de verde al puesto.' },
-  { id: 'monstera', name: 'Monstera', category: 'plantas', price: 95, level: 2, style: 6, w: 1, d: 1, desc: 'Hojas grandes, vibra tropical.' },
-  { id: 'bonsai', name: 'Bonsái', category: 'plantas', price: 160, level: 3, style: 10, w: 1, d: 1, desc: 'Paciencia hecha planta.' },
-  { id: 'arbol', name: 'Árbol de interior', category: 'plantas', price: 260, level: 5, style: 14, w: 1, d: 1, desc: 'Casi un parque propio.' },
-  { id: 'suculentas', name: 'Suculentas', category: 'plantas', price: 35, level: 1, style: 3, w: 1, d: 1, desc: 'Tres macetitas que no piden nada.' },
-  { id: 'lavanda', name: 'Lavanda', category: 'plantas', price: 55, level: 1, style: 4, w: 1, d: 1, desc: 'Huele a calma.' },
-  { id: 'girasoles', name: 'Girasoles', category: 'plantas', price: 75, level: 2, style: 5, w: 1, d: 1, desc: 'Siempre mirando hacia la meta.' },
-  { id: 'orquidea', name: 'Orquídea', category: 'plantas', price: 120, level: 3, style: 8, w: 1, d: 1, desc: 'Elegante y delicada.' },
-  { id: 'palmera', name: 'Palmera', category: 'plantas', price: 230, level: 4, style: 13, w: 1, d: 1, desc: 'Vacaciones permanentes.' },
+  { id: 'cactus', name: 'Cactus', category: 'plantas', price: 30, level: 1, style: 2, w: 1, d: 1, desc: 'Poco riego, mucha actitud.', en: { name: 'Cactus', desc: 'Little water, lots of attitude.' } },
+  { id: 'planta', name: 'Planta de interior', category: 'plantas', price: 40, level: 1, style: 3, w: 1, d: 1, desc: 'Un poco de verde al puesto.', en: { name: 'Houseplant', desc: 'A touch of green for your desk.' } },
+  { id: 'monstera', name: 'Monstera', category: 'plantas', price: 95, level: 2, style: 6, w: 1, d: 1, desc: 'Hojas grandes, vibra tropical.', en: { name: 'Monstera', desc: 'Big leaves, tropical vibes.' } },
+  { id: 'bonsai', name: 'Bonsái', category: 'plantas', price: 160, level: 3, style: 10, w: 1, d: 1, desc: 'Paciencia hecha planta.', en: { name: 'Bonsai', desc: 'Patience in plant form.' } },
+  { id: 'arbol', name: 'Árbol de interior', category: 'plantas', price: 260, level: 5, style: 14, w: 1, d: 1, desc: 'Casi un parque propio.', en: { name: 'Indoor tree', desc: 'Almost your own park.' } },
+  { id: 'suculentas', name: 'Suculentas', category: 'plantas', price: 35, level: 1, style: 3, w: 1, d: 1, desc: 'Tres macetitas que no piden nada.', en: { name: 'Succulents', desc: 'Three little pots that ask for nothing.' } },
+  { id: 'lavanda', name: 'Lavanda', category: 'plantas', price: 55, level: 1, style: 4, w: 1, d: 1, desc: 'Huele a calma.', en: { name: 'Lavender', desc: 'Smells like calm.' } },
+  { id: 'girasoles', name: 'Girasoles', category: 'plantas', price: 75, level: 2, style: 5, w: 1, d: 1, desc: 'Siempre mirando hacia la meta.', en: { name: 'Sunflowers', desc: 'Always facing the goal.' } },
+  { id: 'orquidea', name: 'Orquídea', category: 'plantas', price: 120, level: 3, style: 8, w: 1, d: 1, desc: 'Elegante y delicada.', en: { name: 'Orchid', desc: 'Elegant and delicate.' } },
+  { id: 'palmera', name: 'Palmera', category: 'plantas', price: 230, level: 4, style: 13, w: 1, d: 1, desc: 'Vacaciones permanentes.', en: { name: 'Palm tree', desc: 'Permanent vacation.' } },
   // Tecnología
-  { id: 'dispensador', name: 'Dispensador de agua', category: 'tecnologia', price: 100, level: 2, style: 5, w: 1, d: 1, desc: 'Hidratación de alto rendimiento.' },
-  { id: 'cafetera', name: 'Cafetera espresso', category: 'tecnologia', price: 150, level: 3, style: 8, w: 1, d: 1, desc: 'El motor de la productividad.' },
-  { id: 'minirefri', name: 'Mini refri', category: 'tecnologia', price: 210, level: 4, style: 10, w: 1, d: 1, desc: 'Colaciones siempre frías.' },
-  { id: 'arcade', name: 'Máquina arcade', category: 'tecnologia', price: 520, level: 6, style: 26, w: 1, d: 1, desc: 'Para la pausa activa (de verdad).' },
-  { id: 'impresora', name: 'Impresora', category: 'tecnologia', price: 70, level: 1, style: 4, w: 1, d: 1, desc: 'Imprime las cotizaciones que cierras.' },
-  { id: 'parlante', name: 'Parlante inteligente', category: 'tecnologia', price: 85, level: 2, style: 5, w: 1, d: 1, desc: 'Lo-fi para concentrarse.' },
-  { id: 'pantalla_kpi', name: 'Pantalla de KPIs', category: 'tecnologia', price: 260, level: 4, style: 14, w: 1, d: 1, desc: 'Tus números, siempre a la vista.' },
-  { id: 'consola', name: 'Rincón gamer', category: 'tecnologia', price: 340, level: 5, style: 18, w: 1, d: 1, desc: 'Tele, consola y un puf para la hora de almuerzo.' },
-  { id: 'dron', name: 'Dron', category: 'tecnologia', price: 450, level: 6, style: 22, w: 1, d: 1, desc: 'Para inspecciones aéreas de terreno.' },
+  { id: 'dispensador', name: 'Dispensador de agua', category: 'tecnologia', price: 100, level: 2, style: 5, w: 1, d: 1, desc: 'Hidratación de alto rendimiento.', en: { name: 'Water cooler', desc: 'High-performance hydration.' } },
+  { id: 'cafetera', name: 'Cafetera espresso', category: 'tecnologia', price: 150, level: 3, style: 8, w: 1, d: 1, desc: 'El motor de la productividad.', en: { name: 'Espresso machine', desc: 'The engine of productivity.' } },
+  { id: 'minirefri', name: 'Mini refri', category: 'tecnologia', price: 210, level: 4, style: 10, w: 1, d: 1, desc: 'Colaciones siempre frías.', en: { name: 'Mini fridge', desc: 'Snacks always cold.' } },
+  { id: 'arcade', name: 'Máquina arcade', category: 'tecnologia', price: 520, level: 6, style: 26, w: 1, d: 1, desc: 'Para la pausa activa (de verdad).', en: { name: 'Arcade machine', desc: 'For active breaks (really).' } },
+  { id: 'impresora', name: 'Impresora', category: 'tecnologia', price: 70, level: 1, style: 4, w: 1, d: 1, desc: 'Imprime las cotizaciones que cierras.', en: { name: 'Printer', desc: 'Prints the quotes you close.' } },
+  { id: 'parlante', name: 'Parlante inteligente', category: 'tecnologia', price: 85, level: 2, style: 5, w: 1, d: 1, desc: 'Lo-fi para concentrarse.', en: { name: 'Smart speaker', desc: 'Lo-fi to help you focus.' } },
+  { id: 'pantalla_kpi', name: 'Pantalla de KPIs', category: 'tecnologia', price: 260, level: 4, style: 14, w: 1, d: 1, desc: 'Tus números, siempre a la vista.', en: { name: 'KPI screen', desc: 'Your numbers, always in sight.' } },
+  { id: 'consola', name: 'Rincón gamer', category: 'tecnologia', price: 340, level: 5, style: 18, w: 1, d: 1, desc: 'Tele, consola y un puf para la hora de almuerzo.', en: { name: 'Gamer corner', desc: 'TV, console and a pouf for lunch break.' } },
+  { id: 'dron', name: 'Dron', category: 'tecnologia', price: 450, level: 6, style: 22, w: 1, d: 1, desc: 'Para inspecciones aéreas de terreno.', en: { name: 'Drone', desc: 'For aerial site inspections.' } },
   // Deco
-  { id: 'alfombra', name: 'Alfombra', category: 'deco', price: 80, level: 1, style: 5, w: 2, d: 2, flat: true, desc: 'Une todo el puesto.' },
-  { id: 'lampara', name: 'Lámpara de pie', category: 'deco', price: 60, level: 1, style: 4, w: 1, d: 1, desc: 'Luz cálida para tardes largas.' },
-  { id: 'pizarra', name: 'Pizarra', category: 'deco', price: 90, level: 2, style: 5, w: 1, d: 1, desc: 'Para las grandes ideas.' },
-  { id: 'globo', name: 'Globo terráqueo', category: 'deco', price: 110, level: 2, style: 6, w: 1, d: 1, desc: 'Proyectos en todo el mundo.' },
-  { id: 'cuadro', name: 'Cuadro en atril', category: 'deco', price: 140, level: 3, style: 8, w: 1, d: 1, desc: 'Arte original del equipo.' },
-  { id: 'trofeo', name: 'Vitrina de trofeos', category: 'deco', price: 260, level: 4, style: 14, w: 1, d: 1, desc: 'Muestra tus logros.' },
-  { id: 'pecera', name: 'Pecera', category: 'deco', price: 65, level: 1, style: 4, w: 1, d: 1, desc: 'Un pez naranjo que te saluda.' },
-  { id: 'lampara_lava', name: 'Lámpara de lava', category: 'deco', price: 120, level: 3, style: 7, w: 1, d: 1, desc: 'Burbujas hipnóticas de colores.' },
-  { id: 'parasol', name: 'Quitasol', category: 'deco', price: 160, level: 3, style: 9, w: 1, d: 1, desc: 'Mesa con quitasol, modo terraza.' },
-  { id: 'reloj_pie', name: 'Reloj de pie', category: 'deco', price: 240, level: 4, style: 12, w: 1, d: 1, desc: 'Para no llegar nunca tarde.' },
-  { id: 'gato', name: 'Gato dormilón', category: 'deco', price: 300, level: 4, style: 15, w: 1, d: 1, desc: 'Mascota oficial: duerme en su cojín.' },
-  { id: 'perro', name: 'Perrito', category: 'deco', price: 320, level: 5, style: 16, w: 1, d: 1, desc: 'Fiel compañero de jornada.' },
+  { id: 'alfombra', name: 'Alfombra', category: 'deco', price: 80, level: 1, style: 5, w: 2, d: 2, flat: true, desc: 'Une todo el puesto.', en: { name: 'Rug', desc: 'Ties the whole desk together.' } },
+  { id: 'lampara', name: 'Lámpara de pie', category: 'deco', price: 60, level: 1, style: 4, w: 1, d: 1, desc: 'Luz cálida para tardes largas.', en: { name: 'Floor lamp', desc: 'Warm light for long afternoons.' } },
+  { id: 'pizarra', name: 'Pizarra', category: 'deco', price: 90, level: 2, style: 5, w: 1, d: 1, desc: 'Para las grandes ideas.', en: { name: 'Whiteboard', desc: 'For the big ideas.' } },
+  { id: 'globo', name: 'Globo terráqueo', category: 'deco', price: 110, level: 2, style: 6, w: 1, d: 1, desc: 'Proyectos en todo el mundo.', en: { name: 'Globe', desc: 'Projects all over the world.' } },
+  { id: 'cuadro', name: 'Cuadro en atril', category: 'deco', price: 140, level: 3, style: 8, w: 1, d: 1, desc: 'Arte original del equipo.', en: { name: 'Easel painting', desc: 'Original art by the team.' } },
+  { id: 'trofeo', name: 'Vitrina de trofeos', category: 'deco', price: 260, level: 4, style: 14, w: 1, d: 1, desc: 'Muestra tus logros.', en: { name: 'Trophy cabinet', desc: 'Show off your achievements.' } },
+  { id: 'pecera', name: 'Pecera', category: 'deco', price: 65, level: 1, style: 4, w: 1, d: 1, desc: 'Un pez naranjo que te saluda.', en: { name: 'Fishbowl', desc: 'An orange fish that says hi.' } },
+  { id: 'lampara_lava', name: 'Lámpara de lava', category: 'deco', price: 120, level: 3, style: 7, w: 1, d: 1, desc: 'Burbujas hipnóticas de colores.', en: { name: 'Lava lamp', desc: 'Hypnotic colored bubbles.' } },
+  { id: 'parasol', name: 'Quitasol', category: 'deco', price: 160, level: 3, style: 9, w: 1, d: 1, desc: 'Mesa con quitasol, modo terraza.', en: { name: 'Patio umbrella', desc: 'Table and umbrella, terrace mode.' } },
+  { id: 'reloj_pie', name: 'Reloj de pie', category: 'deco', price: 240, level: 4, style: 12, w: 1, d: 1, desc: 'Para no llegar nunca tarde.', en: { name: 'Grandfather clock', desc: 'So you are never late.' } },
+  { id: 'gato', name: 'Gato dormilón', category: 'deco', price: 300, level: 4, style: 15, w: 1, d: 1, desc: 'Mascota oficial: duerme en su cojín.', en: { name: 'Sleepy cat', desc: 'Official mascot: naps on its cushion.' } },
+  { id: 'perro', name: 'Perrito', category: 'deco', price: 320, level: 5, style: 16, w: 1, d: 1, desc: 'Fiel compañero de jornada.', en: { name: 'Puppy', desc: 'Loyal workday companion.' } },
   // Premium
-  { id: 'acuario', name: 'Acuario', category: 'premium', price: 420, level: 5, style: 22, w: 2, d: 1, desc: 'Peces que trabajan en equipo.' },
-  { id: 'neon', name: 'Letrero neón', category: 'premium', price: 380, level: 5, style: 19, w: 1, d: 1, desc: 'Tu puesto, iluminado.' },
-  { id: 'estatua', name: 'Estatua dorada', category: 'premium', price: 950, level: 8, style: 48, w: 1, d: 1, desc: 'Solo para leyendas de la oficina.' },
-  { id: 'hamaca', name: 'Hamaca', category: 'premium', price: 480, level: 5, style: 24, w: 2, d: 1, desc: 'Siesta corta, ideas largas.' },
-  { id: 'futbolito', name: 'Taca-taca', category: 'premium', price: 560, level: 6, style: 28, w: 2, d: 1, desc: 'El clásico de la oficina chilena.' },
-  { id: 'jukebox', name: 'Rockola', category: 'premium', price: 650, level: 7, style: 32, w: 1, d: 1, desc: 'Luces de neón y clásicos de siempre.' },
-  { id: 'ping_pong', name: 'Mesa de ping-pong', category: 'premium', price: 720, level: 7, style: 34, w: 2, d: 2, desc: 'Torneo de los viernes asegurado.' },
-  { id: 'mesa_pool', name: 'Mesa de pool', category: 'premium', price: 780, level: 8, style: 38, w: 2, d: 2, desc: 'Paño verde y tacos listos.' },
+  { id: 'acuario', name: 'Acuario', category: 'premium', price: 420, level: 5, style: 22, w: 2, d: 1, desc: 'Peces que trabajan en equipo.', en: { name: 'Aquarium', desc: 'Fish that work as a team.' } },
+  { id: 'neon', name: 'Letrero neón', category: 'premium', price: 380, level: 5, style: 19, w: 1, d: 1, desc: 'Tu puesto, iluminado.', en: { name: 'Neon sign', desc: 'Your desk, lit up.' } },
+  { id: 'estatua', name: 'Estatua dorada', category: 'premium', price: 950, level: 8, style: 48, w: 1, d: 1, desc: 'Solo para leyendas de la oficina.', en: { name: 'Golden statue', desc: 'Only for office legends.' } },
+  { id: 'hamaca', name: 'Hamaca', category: 'premium', price: 480, level: 5, style: 24, w: 2, d: 1, desc: 'Siesta corta, ideas largas.', en: { name: 'Hammock', desc: 'Short naps, big ideas.' } },
+  { id: 'futbolito', name: 'Taca-taca', category: 'premium', price: 560, level: 6, style: 28, w: 2, d: 1, desc: 'El clásico de la oficina chilena.', en: { name: 'Foosball table', desc: 'The Chilean office classic.' } },
+  { id: 'jukebox', name: 'Rockola', category: 'premium', price: 650, level: 7, style: 32, w: 1, d: 1, desc: 'Luces de neón y clásicos de siempre.', en: { name: 'Jukebox', desc: 'Neon lights and all-time classics.' } },
+  { id: 'ping_pong', name: 'Mesa de ping-pong', category: 'premium', price: 720, level: 7, style: 34, w: 2, d: 2, desc: 'Torneo de los viernes asegurado.', en: { name: 'Ping-pong table', desc: 'Friday tournament guaranteed.' } },
+  { id: 'mesa_pool', name: 'Mesa de pool', category: 'premium', price: 780, level: 8, style: 38, w: 2, d: 2, desc: 'Paño verde y tacos listos.', en: { name: 'Pool table', desc: 'Green felt and cues at the ready.' } },
   // Legendarios: metas grandes, para presumir en el puesto.
-  { id: 'bola_disco', name: 'Bola disco', category: 'legendario', price: 1100, level: 7, style: 55, w: 1, d: 1, desc: 'Cada viernes es fiesta en tu puesto.' },
-  { id: 'trono', name: 'Trono dorado', category: 'legendario', price: 1250, level: 8, style: 62, w: 1, d: 1, seat: true, desc: 'Trabaja como la realeza de las ventas.' },
-  { id: 'cofre', name: 'Cofre del tesoro', category: 'legendario', price: 1350, level: 8, style: 66, w: 1, d: 1, desc: 'Rebosa de monedas bien ganadas.' },
-  { id: 'piano', name: 'Piano de cola', category: 'legendario', price: 1600, level: 9, style: 80, w: 2, d: 2, desc: 'Música para cerrar negocios.' },
-  { id: 'robot', name: 'Robot asistente', category: 'legendario', price: 1700, level: 10, style: 85, w: 1, d: 1, desc: 'Te trae el café y te alienta.' },
-  { id: 'fuente', name: 'Fuente de mármol', category: 'legendario', price: 1900, level: 10, style: 95, w: 2, d: 2, desc: 'Agua que corre, metas que se cumplen.' },
-  { id: 'cohete', name: 'Cohete espacial', category: 'legendario', price: 2400, level: 12, style: 120, w: 1, d: 1, desc: 'Tus ventas, directo a la luna.' },
-  { id: 'trex', name: 'Esqueleto de T-Rex', category: 'legendario', price: 3200, level: 14, style: 160, w: 2, d: 2, desc: 'La pieza más imponente de la oficina.' },
-  { id: 'unicornio', name: 'Unicornio dorado', category: 'legendario', price: 2100, level: 11, style: 105, w: 1, d: 1, desc: 'Para quien hace posible lo imposible.' },
-  { id: 'dragon', name: 'Dragón de jade', category: 'legendario', price: 2800, level: 13, style: 140, w: 2, d: 2, desc: 'Guardián de las grandes cuentas.' },
-  { id: 'portal', name: 'Portal galáctico', category: 'legendario', price: 3600, level: 15, style: 180, w: 1, d: 1, desc: 'Lleva tus ideas a otra dimensión.' },
+  { id: 'bola_disco', name: 'Bola disco', category: 'legendario', price: 1100, level: 7, style: 55, w: 1, d: 1, desc: 'Cada viernes es fiesta en tu puesto.', en: { name: 'Disco ball', desc: 'Every Friday is a party at your desk.' } },
+  { id: 'trono', name: 'Trono dorado', category: 'legendario', price: 1250, level: 8, style: 62, w: 1, d: 1, seat: true, desc: 'Trabaja como la realeza de las ventas.', en: { name: 'Golden throne', desc: 'Work like sales royalty.' } },
+  { id: 'cofre', name: 'Cofre del tesoro', category: 'legendario', price: 1350, level: 8, style: 66, w: 1, d: 1, desc: 'Rebosa de monedas bien ganadas.', en: { name: 'Treasure chest', desc: 'Overflowing with well-earned coins.' } },
+  { id: 'piano', name: 'Piano de cola', category: 'legendario', price: 1600, level: 9, style: 80, w: 2, d: 2, desc: 'Música para cerrar negocios.', en: { name: 'Grand piano', desc: 'Music for closing deals.' } },
+  { id: 'robot', name: 'Robot asistente', category: 'legendario', price: 1700, level: 10, style: 85, w: 1, d: 1, desc: 'Te trae el café y te alienta.', en: { name: 'Robot assistant', desc: 'Brings you coffee and cheers you on.' } },
+  { id: 'fuente', name: 'Fuente de mármol', category: 'legendario', price: 1900, level: 10, style: 95, w: 2, d: 2, desc: 'Agua que corre, metas que se cumplen.', en: { name: 'Marble fountain', desc: 'Running water, goals achieved.' } },
+  { id: 'cohete', name: 'Cohete espacial', category: 'legendario', price: 2400, level: 12, style: 120, w: 1, d: 1, desc: 'Tus ventas, directo a la luna.', en: { name: 'Space rocket', desc: 'Your sales, straight to the moon.' } },
+  { id: 'trex', name: 'Esqueleto de T-Rex', category: 'legendario', price: 3200, level: 14, style: 160, w: 2, d: 2, desc: 'La pieza más imponente de la oficina.', en: { name: 'T-Rex skeleton', desc: 'The most imposing piece in the office.' } },
+  { id: 'unicornio', name: 'Unicornio dorado', category: 'legendario', price: 2100, level: 11, style: 105, w: 1, d: 1, desc: 'Para quien hace posible lo imposible.', en: { name: 'Golden unicorn', desc: 'For those who make the impossible possible.' } },
+  { id: 'dragon', name: 'Dragón de jade', category: 'legendario', price: 2800, level: 13, style: 140, w: 2, d: 2, desc: 'Guardián de las grandes cuentas.', en: { name: 'Jade dragon', desc: 'Guardian of the big accounts.' } },
+  { id: 'portal', name: 'Portal galáctico', category: 'legendario', price: 3600, level: 15, style: 180, w: 1, d: 1, desc: 'Lleva tus ideas a otra dimensión.', en: { name: 'Galactic portal', desc: 'Takes your ideas to another dimension.' } },
   // Áreas comunes
-  { id: 'mesa_reuniones', name: 'Mesa de reuniones', category: 'muebles', price: 0, level: 1, style: 0, w: 4, d: 2, hidden: true, desc: '' },
-  { id: 'mesa_comedor', name: 'Mesa de comedor', category: 'muebles', price: 0, level: 1, style: 0, w: 4, d: 2, hidden: true, desc: '' },
-  { id: 'meson', name: 'Mesón', category: 'muebles', price: 0, level: 1, style: 0, w: 3, d: 1, hidden: true, desc: '' },
-  { id: 'mesa_redonda', name: 'Mesa redonda', category: 'muebles', price: 0, level: 1, style: 0, w: 1, d: 1, hidden: true, desc: '' },
-  { id: 'meson_recepcion', name: 'Mesón de recepción', category: 'muebles', price: 0, level: 1, style: 0, w: 3, d: 1, hidden: true, desc: '' },
-  { id: 'rack', name: 'Rack de servidores', category: 'tecnologia', price: 0, level: 1, style: 0, w: 1, d: 1, hidden: true, desc: '' },
-  { id: 'jardinera', name: 'Jardinera', category: 'plantas', price: 0, level: 1, style: 0, w: 3, d: 1, hidden: true, desc: '' },
-  { id: 'sillon', name: 'Sillón', category: 'muebles', price: 0, level: 1, style: 0, w: 1, d: 1, hidden: true, desc: '' },
+  { id: 'mesa_reuniones', name: 'Mesa de reuniones', category: 'muebles', price: 0, level: 1, style: 0, w: 4, d: 2, hidden: true, desc: '', en: { name: 'Meeting table' } },
+  { id: 'mesa_comedor', name: 'Mesa de comedor', category: 'muebles', price: 0, level: 1, style: 0, w: 4, d: 2, hidden: true, desc: '', en: { name: 'Dining table' } },
+  { id: 'meson', name: 'Mesón', category: 'muebles', price: 0, level: 1, style: 0, w: 3, d: 1, hidden: true, desc: '', en: { name: 'Counter' } },
+  { id: 'mesa_redonda', name: 'Mesa redonda', category: 'muebles', price: 0, level: 1, style: 0, w: 1, d: 1, hidden: true, desc: '', en: { name: 'Round table' } },
+  { id: 'meson_recepcion', name: 'Mesón de recepción', category: 'muebles', price: 0, level: 1, style: 0, w: 3, d: 1, hidden: true, desc: '', en: { name: 'Reception desk' } },
+  { id: 'rack', name: 'Rack de servidores', category: 'tecnologia', price: 0, level: 1, style: 0, w: 1, d: 1, hidden: true, desc: '', en: { name: 'Server rack' } },
+  { id: 'jardinera', name: 'Jardinera', category: 'plantas', price: 0, level: 1, style: 0, w: 3, d: 1, hidden: true, desc: '', en: { name: 'Planter' } },
+  { id: 'sillon', name: 'Sillón', category: 'muebles', price: 0, level: 1, style: 0, w: 1, d: 1, hidden: true, desc: '', en: { name: 'Armchair' } },
 ];
+
+bilingual(ITEMS);
 
 export const SHOP_ITEMS = ITEMS.filter((i) => !i.hidden && i.price > 0);
 
 export const ITEM_BY_ID: Record<string, ItemDef> = Object.fromEntries(ITEMS.map((i) => [i.id, i]));
 
-export const CATEGORY_LABEL: Record<ItemCategory, string> = {
-  muebles: 'Muebles',
-  plantas: 'Plantas',
-  tecnologia: 'Tecnología',
-  deco: 'Decoración',
-  premium: 'Premium',
-  legendario: 'Legendario',
-};
+export const CATEGORY_LABEL: Record<ItemCategory, string> = L(
+  { muebles: 'Muebles', plantas: 'Plantas', tecnologia: 'Tecnología', deco: 'Decoración', premium: 'Premium', legendario: 'Legendario' },
+  { muebles: 'Furniture', plantas: 'Plants', tecnologia: 'Tech', deco: 'Decor', premium: 'Premium', legendario: 'Legendary' },
+);
 
 export type Rarity = 'comun' | 'raro' | 'epico' | 'legendario';
 
@@ -188,7 +193,10 @@ export function rarityOf(item: ItemDef): Rarity {
   return 'comun';
 }
 
-export const RARITY_LABEL: Record<Rarity, string> = { comun: 'Común', raro: 'Raro', epico: 'Épico', legendario: 'Legendario' };
+export const RARITY_LABEL: Record<Rarity, string> = L(
+  { comun: 'Común', raro: 'Raro', epico: 'Épico', legendario: 'Legendario' },
+  { comun: 'Common', raro: 'Rare', epico: 'Epic', legendario: 'Legendary' },
+);
 
 // ---------------------------------------------------------------------------
 // Desempeño
@@ -199,20 +207,22 @@ export interface AwardDef {
   label: string;
   coins: number;
   icon: string;
+  en?: { label: string };
 }
 
 export const AWARDS: AwardDef[] = [
-  { id: 'tarea', label: 'Tarea completada', coins: 10, icon: '✅' },
-  { id: 'cotizacion', label: 'Cotización enviada', coins: 15, icon: '📄' },
-  { id: 'plazo', label: 'Entrega antes de plazo', coins: 20, icon: '⏱️' },
-  { id: 'cliente', label: 'Atención destacada a cliente', coins: 30, icon: '🤝' },
-  { id: 'capacitacion', label: 'Capacitación completada', coins: 35, icon: '🎓' },
-  { id: 'venta', label: 'Venta cerrada', coins: 40, icon: '💼' },
-  { id: 'mejora', label: 'Idea de mejora implementada', coins: 50, icon: '💡' },
-  { id: 'cliente_nuevo', label: 'Cliente nuevo captado', coins: 60, icon: '🌟' },
-  { id: 'meta', label: 'Meta mensual cumplida', coins: 80, icon: '🎯' },
-  { id: 'record', label: 'Récord de ventas del mes', coins: 150, icon: '🏆' },
+  { id: 'tarea', label: 'Tarea completada', coins: 10, icon: '✅', en: { label: 'Task completed' } },
+  { id: 'cotizacion', label: 'Cotización enviada', coins: 15, icon: '📄', en: { label: 'Quote sent' } },
+  { id: 'plazo', label: 'Entrega antes de plazo', coins: 20, icon: '⏱️', en: { label: 'Delivered ahead of schedule' } },
+  { id: 'cliente', label: 'Atención destacada a cliente', coins: 30, icon: '🤝', en: { label: 'Outstanding customer service' } },
+  { id: 'capacitacion', label: 'Capacitación completada', coins: 35, icon: '🎓', en: { label: 'Training completed' } },
+  { id: 'venta', label: 'Venta cerrada', coins: 40, icon: '💼', en: { label: 'Sale closed' } },
+  { id: 'mejora', label: 'Idea de mejora implementada', coins: 50, icon: '💡', en: { label: 'Improvement idea implemented' } },
+  { id: 'cliente_nuevo', label: 'Cliente nuevo captado', coins: 60, icon: '🌟', en: { label: 'New client won' } },
+  { id: 'meta', label: 'Meta mensual cumplida', coins: 80, icon: '🎯', en: { label: 'Monthly goal met' } },
+  { id: 'record', label: 'Récord de ventas del mes', coins: 150, icon: '🏆', en: { label: 'Monthly sales record' } },
 ];
+bilingual(AWARDS);
 
 export const KUDOS_PER_DAY = 3;
 export const KUDOS_COINS = 5;
@@ -238,12 +248,20 @@ export function levelForXp(xp: number): number {
   return level;
 }
 
-export const LEVEL_TITLES = [
-  'Recién llegado', 'Aprendiz', 'Colaborador', 'Colaborador sólido', 'Referente',
-  'Experto', 'Especialista', 'Mentor', 'Líder', 'Estrella',
-  'Estrella brillante', 'Crack', 'Gran crack', 'Maestro', 'Gran maestro',
-  'Visionario', 'Ícono', 'Leyenda', 'Gran leyenda', 'Mito de la oficina',
-];
+export const LEVEL_TITLES = L(
+  [
+    'Recién llegado', 'Aprendiz', 'Colaborador', 'Colaborador sólido', 'Referente',
+    'Experto', 'Especialista', 'Mentor', 'Líder', 'Estrella',
+    'Estrella brillante', 'Crack', 'Gran crack', 'Maestro', 'Gran maestro',
+    'Visionario', 'Ícono', 'Leyenda', 'Gran leyenda', 'Mito de la oficina',
+  ],
+  [
+    'Newcomer', 'Apprentice', 'Team member', 'Solid team member', 'Go-to person',
+    'Expert', 'Specialist', 'Mentor', 'Leader', 'Star',
+    'Shining star', 'Ace', 'Top ace', 'Master', 'Grand master',
+    'Visionary', 'Icon', 'Legend', 'Great legend', 'Office myth',
+  ],
+);
 
 // ---------------------------------------------------------------------------
 // Avatar
@@ -260,10 +278,11 @@ export const AVATAR_SHIRT = [
   '#1d2a44', '#7a1f2b', '#c9b28a', '#4a5d23', '#f07f3c',
 ];
 export const AVATAR_PANTS = ['#2d3a5a', '#3d3d48', '#6b4a2e', '#1e1e26', '#56697a', '#c9b28a', '#7a1f2b', '#e6e4ec', '#2f5d3a'];
-export const HAIR_STYLES = [
-  'Corto', 'Largo', 'Rapado', 'Crespo', 'Moño', 'Cola', 'Trenzas', 'Mohicano', 'Melena', 'Coletas', 'Calvo', 'De lado', 'Ondas', 'Puntas',
-];
-export const ACCESSORIES = ['Nada', 'Lentes', 'Audífonos', 'Ambos'];
+export const HAIR_STYLES = L(
+  ['Corto', 'Largo', 'Rapado', 'Crespo', 'Moño', 'Cola', 'Trenzas', 'Mohicano', 'Melena', 'Coletas', 'Calvo', 'De lado', 'Ondas', 'Puntas'],
+  ['Short', 'Long', 'Buzz cut', 'Curly', 'Bun', 'Ponytail', 'Braids', 'Mohawk', 'Mane', 'Pigtails', 'Bald', 'Side part', 'Waves', 'Spiky'],
+);
+export const ACCESSORIES = L(['Nada', 'Lentes', 'Audífonos', 'Ambos'], ['None', 'Glasses', 'Headphones', 'Both']);
 
 // ---------------------------------------------------------------------------
 // Vestuario: adornos del personaje que se compran con monedas
@@ -280,39 +299,42 @@ export interface CosmeticDef {
   desc: string;
   /** Solo se gana (logros, regalos de administración); no aparece a la venta. */
   special?: boolean;
+  en?: { name: string; desc: string };
 }
 
-export const SLOT_LABEL: Record<CosmeticSlot, string> = { hat: 'Cabeza', face: 'Cara', neck: 'Cuello' };
+export const SLOT_LABEL: Record<CosmeticSlot, string> = L({ hat: 'Cabeza', face: 'Cara', neck: 'Cuello' }, { hat: 'Head', face: 'Face', neck: 'Neck' });
 
 export const COSMETICS: CosmeticDef[] = [
   // Cabeza
-  { id: 'gorro_lana', name: 'Gorro de lana', slot: 'hat', price: 60, level: 1, desc: 'Para las mañanas frías de Santiago.' },
-  { id: 'jockey', name: 'Jockey', slot: 'hat', price: 70, level: 1, desc: 'Visera al frente, actitud ganadora.' },
-  { id: 'cintillo_flor', name: 'Cintillo con flor', slot: 'hat', price: 80, level: 2, desc: 'Un toque de primavera.' },
-  { id: 'boina', name: 'Boina', slot: 'hat', price: 110, level: 3, desc: 'Estilo artista.' },
-  { id: 'casco_obra', name: 'Casco de obra', slot: 'hat', price: 130, level: 3, desc: 'Ingeniería de protección, siempre.' },
-  { id: 'gorro_fiesta', name: 'Gorro de fiesta', slot: 'hat', price: 150, level: 4, desc: 'Cada meta cumplida es un cumpleaños.' },
-  { id: 'sombrero_vaquero', name: 'Sombrero vaquero', slot: 'hat', price: 220, level: 5, desc: 'El sheriff de las ventas.' },
-  { id: 'sombrero_copa', name: 'Sombrero de copa', slot: 'hat', price: 320, level: 6, desc: 'Elegancia de gerencia.' },
-  { id: 'cuernos_vikingo', name: 'Casco vikingo', slot: 'hat', price: 420, level: 7, desc: 'Conquista clientes como un guerrero.' },
-  { id: 'corona', name: 'Corona', slot: 'hat', price: 900, level: 10, desc: 'Reina o rey de la oficina.' },
-  { id: 'aureola', name: 'Aureola', slot: 'hat', price: 1200, level: 12, desc: 'Brilla de pura buena onda.' },
+  { id: 'gorro_lana', name: 'Gorro de lana', slot: 'hat', price: 60, level: 1, desc: 'Para las mañanas frías de Santiago.', en: { name: 'Wool beanie', desc: 'For chilly Santiago mornings.' } },
+  { id: 'jockey', name: 'Jockey', slot: 'hat', price: 70, level: 1, desc: 'Visera al frente, actitud ganadora.', en: { name: 'Cap', desc: 'Visor forward, winning attitude.' } },
+  { id: 'cintillo_flor', name: 'Cintillo con flor', slot: 'hat', price: 80, level: 2, desc: 'Un toque de primavera.', en: { name: 'Flower headband', desc: 'A touch of spring.' } },
+  { id: 'boina', name: 'Boina', slot: 'hat', price: 110, level: 3, desc: 'Estilo artista.', en: { name: 'Beret', desc: 'Artist style.' } },
+  { id: 'casco_obra', name: 'Casco de obra', slot: 'hat', price: 130, level: 3, desc: 'Ingeniería de protección, siempre.', en: { name: 'Hard hat', desc: 'Protection engineering, always.' } },
+  { id: 'gorro_fiesta', name: 'Gorro de fiesta', slot: 'hat', price: 150, level: 4, desc: 'Cada meta cumplida es un cumpleaños.', en: { name: 'Party hat', desc: 'Every goal met is a birthday.' } },
+  { id: 'sombrero_vaquero', name: 'Sombrero vaquero', slot: 'hat', price: 220, level: 5, desc: 'El sheriff de las ventas.', en: { name: 'Cowboy hat', desc: 'The sheriff of sales.' } },
+  { id: 'sombrero_copa', name: 'Sombrero de copa', slot: 'hat', price: 320, level: 6, desc: 'Elegancia de gerencia.', en: { name: 'Top hat', desc: 'Executive elegance.' } },
+  { id: 'cuernos_vikingo', name: 'Casco vikingo', slot: 'hat', price: 420, level: 7, desc: 'Conquista clientes como un guerrero.', en: { name: 'Viking helmet', desc: 'Conquer clients like a warrior.' } },
+  { id: 'corona', name: 'Corona', slot: 'hat', price: 900, level: 10, desc: 'Reina o rey de la oficina.', en: { name: 'Crown', desc: 'Queen or king of the office.' } },
+  { id: 'aureola', name: 'Aureola', slot: 'hat', price: 1200, level: 12, desc: 'Brilla de pura buena onda.', en: { name: 'Halo', desc: 'Glowing with pure good vibes.' } },
   // Cara
-  { id: 'bigote', name: 'Bigote', slot: 'face', price: 50, level: 1, desc: 'Clásico e infalible.' },
-  { id: 'barba', name: 'Barba', slot: 'face', price: 90, level: 2, desc: 'Barba completa y bien cuidada.' },
-  { id: 'lentes_sol', name: 'Lentes de sol', slot: 'face', price: 120, level: 2, desc: 'El futuro es brillante.' },
-  { id: 'pecas', name: 'Pecas', slot: 'face', price: 40, level: 1, desc: 'Un toque natural.' },
-  { id: 'monoculo', name: 'Monóculo', slot: 'face', price: 260, level: 6, desc: 'Para revisar contratos con lupa.' },
-  { id: 'lentes_pixel', name: 'Lentes pixel', slot: 'face', price: 480, level: 8, desc: 'Deal with it.' },
+  { id: 'bigote', name: 'Bigote', slot: 'face', price: 50, level: 1, desc: 'Clásico e infalible.', en: { name: 'Mustache', desc: 'Classic and foolproof.' } },
+  { id: 'barba', name: 'Barba', slot: 'face', price: 90, level: 2, desc: 'Barba completa y bien cuidada.', en: { name: 'Beard', desc: 'A full, well-groomed beard.' } },
+  { id: 'lentes_sol', name: 'Lentes de sol', slot: 'face', price: 120, level: 2, desc: 'El futuro es brillante.', en: { name: 'Sunglasses', desc: 'The future is bright.' } },
+  { id: 'pecas', name: 'Pecas', slot: 'face', price: 40, level: 1, desc: 'Un toque natural.', en: { name: 'Freckles', desc: 'A natural touch.' } },
+  { id: 'monoculo', name: 'Monóculo', slot: 'face', price: 260, level: 6, desc: 'Para revisar contratos con lupa.', en: { name: 'Monocle', desc: 'For going over contracts in detail.' } },
+  { id: 'lentes_pixel', name: 'Lentes pixel', slot: 'face', price: 480, level: 8, desc: 'Deal with it.', en: { name: 'Pixel shades', desc: 'Deal with it.' } },
   // Cuello
-  { id: 'humita', name: 'Humita', slot: 'neck', price: 60, level: 1, desc: 'Corbata de lazo, muy formal.' },
-  { id: 'bufanda', name: 'Bufanda', slot: 'neck', price: 80, level: 2, desc: 'Abrigadita y con estilo.' },
-  { id: 'collar_perlas', name: 'Collar de perlas', slot: 'neck', price: 200, level: 4, desc: 'Un clásico de la elegancia.' },
-  { id: 'medalla', name: 'Medalla de oro', slot: 'neck', price: 600, level: 9, desc: 'Para quienes siempre llegan primero.' },
+  { id: 'humita', name: 'Humita', slot: 'neck', price: 60, level: 1, desc: 'Corbata de lazo, muy formal.', en: { name: 'Bow tie', desc: 'Very formal.' } },
+  { id: 'bufanda', name: 'Bufanda', slot: 'neck', price: 80, level: 2, desc: 'Abrigadita y con estilo.', en: { name: 'Scarf', desc: 'Cozy and stylish.' } },
+  { id: 'collar_perlas', name: 'Collar de perlas', slot: 'neck', price: 200, level: 4, desc: 'Un clásico de la elegancia.', en: { name: 'Pearl necklace', desc: 'An elegant classic.' } },
+  { id: 'medalla', name: 'Medalla de oro', slot: 'neck', price: 600, level: 9, desc: 'Para quienes siempre llegan primero.', en: { name: 'Gold medal', desc: 'For those who always finish first.' } },
   // Especiales (por logros)
-  { id: 'corona_laurel', name: 'Corona de laurel', slot: 'hat', price: 0, level: 1, desc: 'Logro: completar 20 misiones.', special: true },
-  { id: 'medalla_puntual', name: 'Medalla de puntualidad', slot: 'neck', price: 0, level: 1, desc: 'Logro: llegar puntual 10 días.', special: true },
+  { id: 'corona_laurel', name: 'Corona de laurel', slot: 'hat', price: 0, level: 1, desc: 'Logro: completar 20 misiones.', special: true, en: { name: 'Laurel crown', desc: 'Achievement: complete 20 missions.' } },
+  { id: 'medalla_puntual', name: 'Medalla de puntualidad', slot: 'neck', price: 0, level: 1, desc: 'Logro: llegar puntual 10 días.', special: true, en: { name: 'Punctuality medal', desc: 'Achievement: arrive on time 10 days.' } },
 ];
+
+bilingual(COSMETICS);
 
 export const COSMETIC_BY_ID: Record<string, CosmeticDef> = Object.fromEntries(COSMETICS.map((c) => [c.id, c]));
 export const SHOP_COSMETICS = COSMETICS.filter((c) => !c.special);

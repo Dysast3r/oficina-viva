@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from 'react';
 import { bridge } from '../bridge';
+import { L, lang } from '../i18n';
 import * as logic from './logic';
 import type { Action, Fx, Result } from './logic';
 import { newUid } from './seed';
@@ -168,14 +169,14 @@ export async function api<T = Result>(path: string, body?: unknown): Promise<T &
     const res = await fetch(`/api/${path}`, {
       method: body === undefined ? 'GET' : 'POST',
       credentials: 'same-origin',
-      headers: body === undefined ? {} : { 'Content-Type': 'application/json', 'X-Oficina-Viva': '1' },
+      headers: body === undefined ? { 'X-Lang': lang() } : { 'Content-Type': 'application/json', 'X-Oficina-Viva': '1', 'X-Lang': lang() },
       body: body === undefined ? undefined : JSON.stringify(body),
     });
     const data = (await res.json().catch(() => ({}))) as T & { ok?: boolean; message?: string };
     if (res.status === 401 && path !== 'login' && path !== 'password') sessionLost();
-    return { ...data, ok: res.ok && data.ok !== false, message: data.message ?? (res.ok ? '' : 'Error del servidor.') };
+    return { ...data, ok: res.ok && data.ok !== false, message: data.message ?? (res.ok ? '' : L('Error del servidor.', 'Server error.')) };
   } catch {
-    return { ok: false, message: 'Sin conexión con el servidor.' } as T & { ok: boolean; message: string };
+    return { ok: false, message: L('Sin conexión con el servidor.', 'No connection to the server.') } as T & { ok: boolean; message: string };
   }
 }
 
@@ -249,13 +250,13 @@ function sessionLost(): void {
   if (user === null) return;
   bridge.emit('decor:mode', null);
   setUser(null);
-  syncError('Tu sesión terminó. Vuelve a entrar.');
+  syncError(L('Tu sesión terminó. Vuelve a entrar.', 'Your session ended. Please log in again.'));
 }
 
 /** Al cargar la página: ¿hay una sesión abierta? */
 async function restoreSession(): Promise<void> {
   const r = await api<{ user: SessionUser | null }>('session');
-  if (!r.ok) syncError(r.message || 'Sin conexión con el servidor.');
+  if (!r.ok) syncError(r.message || L('Sin conexión con el servidor.', 'No connection to the server.'));
   setUser(r.ok ? r.user : null);
 }
 
@@ -265,9 +266,9 @@ async function restoreSession(): Promise<void> {
 
 export async function login(username: string, password: string): Promise<Result> {
   const r = await api<{ user?: SessionUser }>('login', { username, password });
-  if (!r.ok || r.user === undefined) return { ok: false, message: r.message || 'No se pudo entrar.' };
+  if (!r.ok || r.user === undefined) return { ok: false, message: r.message || L('No se pudo entrar.', "Couldn't log in.") };
   setUser(r.user);
-  return { ok: true, message: `Hola, ${r.user.username}` };
+  return { ok: true, message: L(`Hola, ${r.user.username}`, `Hi, ${r.user.username}`) };
 }
 
 export function logout(): void {
@@ -278,9 +279,9 @@ export function logout(): void {
 
 export async function changePassword(current: string, next: string): Promise<Result> {
   const r = await api<{ user?: SessionUser }>('password', { current, next });
-  if (!r.ok) return { ok: false, message: r.message || 'No se pudo cambiar.' };
+  if (!r.ok) return { ok: false, message: r.message || L('No se pudo cambiar.', "Couldn't change it.") };
   if (r.user) setUser(r.user);
-  return { ok: true, message: r.message || 'Contraseña actualizada.' };
+  return { ok: true, message: r.message || L('Contraseña actualizada.', 'Password updated.') };
 }
 
 // ---------------------------------------------------------------------------
@@ -289,7 +290,7 @@ export async function changePassword(current: string, next: string): Promise<Res
 
 function act(action: Action): Result {
   const me = user?.id;
-  if (me === undefined || status !== 'in') return { ok: false, message: 'Inicia sesión primero.' };
+  if (me === undefined || status !== 'in') return { ok: false, message: L('Inicia sesión primero.', 'Log in first.') };
   const out = logic.applyAction(state, me, action);
   if (!out.result.ok) return out.result;
   const p: Pending = { id: newUid('q'), action };
@@ -304,7 +305,7 @@ function act(action: Action): Result {
     } else {
       // El servidor no la aceptó (otra persona se adelantó, sin conexión…): se deshace.
       pending = pending.filter((x) => x !== p);
-      syncError(r.message || 'No se pudo guardar el cambio.');
+      syncError(r.message || L('No se pudo guardar el cambio.', "Couldn't save the change."));
     }
     recompute();
   });

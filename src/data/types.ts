@@ -1,3 +1,5 @@
+import type { Msg } from './messages';
+
 export type DeptId = 'gerencia' | 'ventas' | 'contabilidad' | 'ti';
 export type RoomId = DeptId | 'reuniones' | 'cafeteria' | 'terraza' | 'juegos' | 'mirador';
 
@@ -80,6 +82,8 @@ export interface AppNotification {
   body?: string;
   /** Datos para mostrarlo: itemId del regalo, id de la reunión, etc. */
   data?: Record<string, string | number>;
+  /** Título y cuerpo para mostrar en el idioma de cada quien (los avisos antiguos no lo traen). */
+  msg?: { title: Msg; body?: Msg };
   read: boolean;
 }
 
@@ -168,7 +172,10 @@ export interface ActivityEvent {
   targetId: string;
   actorId?: string;
   amount?: number;
+  /** Respaldo en español (los eventos antiguos solo traen esto). */
   text: string;
+  /** Para mostrarlo en el idioma de cada quien. */
+  msg?: Msg;
 }
 
 export interface GameState {

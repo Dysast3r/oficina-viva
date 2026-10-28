@@ -4,6 +4,7 @@
  * oficina está "abierta" en el mundo.
  */
 
+import { L } from '../i18n';
 import { hash } from './progress';
 
 export const TIME_ZONE = 'America/Santiago';
@@ -37,7 +38,10 @@ export const LUNCH: Shift = { start: hm(15, 0), end: hm(16, 0) };
 export const BREAK_MIN = 10;
 export const BREAK_MAX = 15;
 
-const DAY_NAMES = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+const DAY_NAMES = {
+  es: ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'],
+  en: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+};
 const WEEKDAY: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
 
 const partsFormat = new Intl.DateTimeFormat('en-US', {
@@ -124,19 +128,19 @@ export function scheduleStatus(ts: number): { open: boolean; text: string } {
   const { weekday, minutes } = officeClock(ts);
   const s = shiftOn(weekday);
   if (s !== null && minutes >= s.start && minutes < s.end) {
-    if (minutes >= LUNCH.start && minutes < LUNCH.end) return { open: true, text: `🍽️ Colación hasta las ${fmtMinutes(LUNCH.end)}` };
-    return { open: true, text: `Jornada ${fmtMinutes(s.start)} – ${fmtMinutes(s.end)}` };
+    if (minutes >= LUNCH.start && minutes < LUNCH.end) return { open: true, text: L(`🍽️ Colación hasta las ${fmtMinutes(LUNCH.end)}`, `🍽️ Lunch until ${fmtMinutes(LUNCH.end)}`) };
+    return { open: true, text: L(`Jornada ${fmtMinutes(s.start)} – ${fmtMinutes(s.end)}`, `Workday ${fmtMinutes(s.start)} – ${fmtMinutes(s.end)}`) };
   }
-  if (s !== null && minutes < s.start) return { open: false, text: `Abre hoy a las ${fmtMinutes(s.start)}` };
+  if (s !== null && minutes < s.start) return { open: false, text: L(`Abre hoy a las ${fmtMinutes(s.start)}`, `Opens today at ${fmtMinutes(s.start)}`) };
   for (let i = 1; i <= 7; i++) {
     const wd = (weekday + i) % 7;
     const next = shiftOn(wd);
     if (next !== null) {
-      const when = i === 1 ? 'mañana' : `el ${DAY_NAMES[wd]}`;
-      return { open: false, text: `Fuera de horario · vuelve ${when} ${fmtMinutes(next.start)}` };
+      const when = i === 1 ? L('mañana', 'tomorrow') : L(`el ${DAY_NAMES.es[wd]}`, DAY_NAMES.en[wd]);
+      return { open: false, text: L(`Fuera de horario · vuelve ${when} ${fmtMinutes(next.start)}`, `After hours · back ${when} ${fmtMinutes(next.start)}`) };
     }
   }
-  return { open: false, text: 'Fuera de horario' };
+  return { open: false, text: L('Fuera de horario', 'After hours') };
 }
 
 /** Por qué no se puede marcar ahora (o null si se puede). */
@@ -144,7 +148,7 @@ export function checkInBlockedReason(ts: number): string | null {
   if (canCheckInAt(ts)) return null;
   const { weekday, minutes } = officeClock(ts);
   const s = shiftOn(weekday);
-  if (s === null) return 'Hoy no es día laboral.';
-  if (minutes < s.start - CHECKIN_EARLY_MIN) return `Puedes marcar desde las ${fmtMinutes(s.start - CHECKIN_EARLY_MIN)}.`;
-  return `La jornada de hoy terminó a las ${fmtMinutes(s.end)}.`;
+  if (s === null) return L('Hoy no es día laboral.', "Today isn't a workday.");
+  if (minutes < s.start - CHECKIN_EARLY_MIN) return L(`Puedes marcar desde las ${fmtMinutes(s.start - CHECKIN_EARLY_MIN)}.`, `You can check in from ${fmtMinutes(s.start - CHECKIN_EARLY_MIN)}.`);
+  return L(`La jornada de hoy terminó a las ${fmtMinutes(s.end)}.`, `Today's workday ended at ${fmtMinutes(s.end)}.`);
 }

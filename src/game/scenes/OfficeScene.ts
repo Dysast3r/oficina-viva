@@ -41,6 +41,7 @@ import { depthOf, project, screenToTile, tileTop } from '../iso';
 import { itemOrigin } from '../pixel/furniture';
 import { ART_SCALE } from '../pixel/IsoPainter';
 import { SIGN_RES, WALL_GLASS, WALL_TALL, buildSign, buildWorldTextures, floorKey, itemKey, wallKey } from '../pixel/textures';
+import { L, intlLocale } from '../../i18n';
 import { NUM_FONT, crispText } from '../text';
 import { findPath, type Point } from '../world/pathfinding';
 
@@ -53,12 +54,22 @@ type Spot = Seat & { seat: boolean };
 type Destination = Point & { kind: 'casino' | 'visit' | 'room'; with?: string };
 
 /** Frases que dicen los colaboradores mientras trabajan (globos estilo Habbo). */
-const CHATTER = [
-  '¡Cotización enviada! 📄', '¿Alguien quiere café? ☕', 'Cerrando una venta 💼', 'Llamando al cliente 📞',
-  '¡Meta cada vez más cerca! 🎯', 'Revisando las OC 📋', 'Buen día equipo 👋', '¡Vamos que se puede! 💪',
-  'Reunión en 5 min ⏰', 'Excelente trabajo 👏',
-];
-const LUNCH_TALK = ['🍽️', '🥗', '🍲', '😋', '¡Qué rico! 😋', '¿Me pasas la sal? 🧂', '¿Postre? 🍮', '☕', '¡Buen provecho!'];
+const CHATTER = L(
+  [
+    '¡Cotización enviada! 📄', '¿Alguien quiere café? ☕', 'Cerrando una venta 💼', 'Llamando al cliente 📞',
+    '¡Meta cada vez más cerca! 🎯', 'Revisando las OC 📋', 'Buen día equipo 👋', '¡Vamos que se puede! 💪',
+    'Reunión en 5 min ⏰', 'Excelente trabajo 👏',
+  ],
+  [
+    'Quote sent! 📄', 'Anyone want coffee? ☕', 'Closing a sale 💼', 'Calling the client 📞',
+    'Goal getting closer! 🎯', 'Checking the POs 📋', 'Morning, team 👋', 'We can do this! 💪',
+    'Meeting in 5 min ⏰', 'Great work 👏',
+  ],
+);
+const LUNCH_TALK = L(
+  ['🍽️', '🥗', '🍲', '😋', '¡Qué rico! 😋', '¿Me pasas la sal? 🧂', '¿Postre? 🍮', '☕', '¡Buen provecho!'],
+  ['🍽️', '🥗', '🍲', '😋', 'Delicious! 😋', 'Pass the salt? 🧂', 'Dessert? 🍮', '☕', 'Enjoy your meal!'],
+);
 const EMOTES = ['☕', '💡', '📊', '📞', '✉️', '🤝', '📈', '💻', '🎯', '💼', '😄', '🔥'];
 
 const LEGENDARY = new Set([
@@ -346,7 +357,9 @@ export class OfficeScene extends Phaser.Scene {
     const fund = officeFund(state);
     const prev = getBuiltLevel() === 0 ? 0 : EXPANSIONS[getBuiltLevel() - 1].cost;
     const pct = Math.max(0, Math.min(1, (fund.total - prev) / (next.cost - prev)));
-    this.construction.label.setText(`🚧 PRÓXIMAMENTE: ${ROOMS[next.room.id].name.toUpperCase()}\n${fund.total.toLocaleString('es-CL')} / ${next.cost.toLocaleString('es-CL')} monedas`);
+    const room = ROOMS[next.room.id].name.toUpperCase();
+    const progress = `${fund.total.toLocaleString(intlLocale())} / ${next.cost.toLocaleString(intlLocale())}`;
+    this.construction.label.setText(L(`🚧 PRÓXIMAMENTE: ${room}\n${progress} monedas`, `🚧 COMING SOON: ${room}\n${progress} coins`));
     const { bar, x, y } = this.construction;
     const w = 60;
     bar.clear();
@@ -758,9 +771,9 @@ export class OfficeScene extends Phaser.Scene {
     const now = Date.now();
     // Reunión en curso: a la sala, y ahí se queda hasta que termine.
     const meeting = activeMeetingFor(getState(), e.id);
-    if (meeting && this.gather(s, 'meeting', this.meetingSpot(e.id, meeting), ['🗓️ ¡A la reunión!', 'Voy a la sala 🏃', '📋', '¡Vamos!'])) return;
+    if (meeting && this.gather(s, 'meeting', this.meetingSpot(e.id, meeting), L(['🗓️ ¡A la reunión!', 'Voy a la sala 🏃', '📋', '¡Vamos!'], ['🗓️ Meeting time!', 'Heading to the room 🏃', '📋', "Let's go!"]))) return;
     // Colación: todos al casino a almorzar.
-    if (isLunchTime(now) && this.gather(s, 'lunch', this.lunchSpot(e.id), ['🍽️ ¡A almorzar!', '¡Hambre! 🍲', 'Al casino 🥗', '🍕'])) return;
+    if (isLunchTime(now) && this.gather(s, 'lunch', this.lunchSpot(e.id), L(['🍽️ ¡A almorzar!', '¡Hambre! 🍲', 'Al casino 🥗', '🍕'], ['🍽️ Lunch time!', 'Starving! 🍲', 'To the cafeteria 🥗', '🍕']))) return;
     this.gatheredAt.delete(e.id);
     this.gatherSaid.delete(e.id);
 
@@ -771,7 +784,7 @@ export class OfficeScene extends Phaser.Scene {
       if (s.mode === 'sit') {
         s.standUp(1600);
         s.gesture('stretch', 1500);
-        if (Math.random() < 0.35) s.say(pick(['🥱', '¡Una pausa!', '☕ ¿Café?', '💪']), 2200);
+        if (Math.random() < 0.35) s.say(pick(L(['🥱', '¡Una pausa!', '☕ ¿Café?', '💪'], ['🥱', 'Break time!', '☕ Coffee?', '💪'])), 2200);
         return;
       }
       const dest = this.randomDestination(e);
@@ -798,7 +811,7 @@ export class OfficeScene extends Phaser.Scene {
         const call = rand(8000, 16_000);
         s.gesture('phone', call);
         s.timer = Math.max(work, call);
-        if (Math.random() < 0.6) s.say(pick(['📞', '¿Aló? 📞', 'Sí, le envío la cotización 📄', 'Perfecto, quedamos así 👍', '📱']), 2600);
+        if (Math.random() < 0.6) s.say(pick(L(['📞', '¿Aló? 📞', 'Sí, le envío la cotización 📄', 'Perfecto, quedamos así 👍', '📱'], ['📞', 'Hello? 📞', "Sure, I'll send you the quote 📄", "Perfect, it's a deal 👍", '📱'])), 2600);
       }
       return;
     }
@@ -970,7 +983,7 @@ export class OfficeScene extends Phaser.Scene {
         go(this.besidePerson(friend), () => {
           p.rest('sit', rand(10_000, 20_000));
           if (Math.random() < 0.5) p.emote('❤️');
-          if (Math.random() < 0.4) friend.say(pick([`¡Hola ${p.name}! 🐶`, '¿Quién es un buen perro? 🐕', `¡${p.name}! ❤️`, '🐶']), 2600);
+          if (Math.random() < 0.4) friend.say(pick(L([`¡Hola ${p.name}! 🐶`, '¿Quién es un buen perro? 🐕', `¡${p.name}! ❤️`, '🐶'], [`Hi ${p.name}! 🐶`, "Who's a good dog? 🐕", `${p.name}! ❤️`, '🐶'])), 2600);
         });
       } else if (r < 0.6 && people.length > 0) {
         go(this.besidePerson(pick(people)), () => p.rest('lie', rand(30_000, 70_000)));
@@ -981,7 +994,7 @@ export class OfficeScene extends Phaser.Scene {
         });
       } else {
         p.rest('sit', rand(6000, 12_000));
-        if (Math.random() < 0.4) p.emote('¡Guau!');
+        if (Math.random() < 0.4) p.emote(L('¡Guau!', 'Woof!'));
       }
       return;
     }
@@ -1009,10 +1022,10 @@ export class OfficeScene extends Phaser.Scene {
   /** Cariño con un clic: salta, corazones y su sonido. */
   private petClicked(p: PetSprite): void {
     if (p.kind === 'cat' && p.mode === 'lie') {
-      p.emote(pick(['Prrr… 💤', '😽', 'Prrr ❤️']));
+      p.emote(pick(L(['Prrr… 💤', '😽', 'Prrr ❤️'], ['Purrr… 💤', '😽', 'Purrr ❤️'])));
     } else {
       p.hop();
-      p.emote(p.kind === 'dog' ? pick(['¡Guau! 🐶', '¡Guau guau! ❤️', '🐾❤️']) : pick(['¡Miau! 😺', 'Miau ❤️', '😸']));
+      p.emote(p.kind === 'dog' ? pick(L(['¡Guau! 🐶', '¡Guau guau! ❤️', '🐾❤️'], ['Woof! 🐶', 'Woof woof! ❤️', '🐾❤️'])) : pick(L(['¡Miau! 😺', 'Miau ❤️', '😸'], ['Meow! 😺', 'Meow ❤️', '😸'])));
       if (p.mode !== 'walk') p.rest(p.kind === 'dog' ? 'stand' : 'sit', 5000);
     }
     const x = p.body.x;
@@ -1032,7 +1045,7 @@ export class OfficeScene extends Phaser.Scene {
     const r = ROOM_BY_ID.reuniones.rect;
     const c = project(r.x + 6, r.y + 4);
     // Bien arriba, para no tapar los nombres de quienes están en la mesa.
-    const label = crispText(this, c.x, c.y - 62, `🔴 EN REUNIÓN · ${live.title}`, {
+    const label = crispText(this, c.x, c.y - 62, L(`🔴 EN REUNIÓN · ${live.title}`, `🔴 IN A MEETING · ${live.title}`), {
       fontFamily: NUM_FONT,
       fontSize: '6.5px',
       fontStyle: '900',
@@ -1075,13 +1088,13 @@ export class OfficeScene extends Phaser.Scene {
   private chat(s: EmployeeSprite, otherId: string): void {
     const o = this.sprites.get(otherId);
     s.gesture('wave', 1800);
-    s.say(pick(['¡Hola! 👋', '¿Cómo va todo?', '¡Buenas!', '¿Un café? ☕', '¿Viste el correo? 📧']), 3000);
+    s.say(pick(L(['¡Hola! 👋', '¿Cómo va todo?', '¡Buenas!', '¿Un café? ☕', '¿Viste el correo? 📧'], ['Hi! 👋', 'How is it going?', 'Hey there!', 'Coffee? ☕', 'Did you see the email? 📧'])), 3000);
     if (o === undefined || o.mode === 'walk') return;
     const lines: [EmployeeSprite, string[]][] = [
-      [o, ['¡Hola! 👋', '¡Todo bien! 😄', 'Aquí, en la lucha 💪', 'Dale, en un rato ☕']],
-      [s, ['¿Cerraste lo de ayer?', 'Buena esa 👏', '¿Almorzamos juntos? 🍽️', 'Te mando el archivo 📎']],
-      [o, ['¡Sí! 🎉', 'Jajaja 😂', 'Va, te aviso 👍', 'Gracias 🙌']],
-      [s, ['Nos vemos 👋', '¡Éxito! 💪', '👍', '😄']],
+      [o, L(['¡Hola! 👋', '¡Todo bien! 😄', 'Aquí, en la lucha 💪', 'Dale, en un rato ☕'], ['Hi! 👋', 'All good! 😄', 'Hanging in there 💪', 'Sure, in a bit ☕'])],
+      [s, L(['¿Cerraste lo de ayer?', 'Buena esa 👏', '¿Almorzamos juntos? 🍽️', 'Te mando el archivo 📎'], ["Did you close yesterday's deal?", 'Nice one 👏', 'Lunch together? 🍽️', "I'll send you the file 📎"])],
+      [o, L(['¡Sí! 🎉', 'Jajaja 😂', 'Va, te aviso 👍', 'Gracias 🙌'], ['Yes! 🎉', 'Hahaha 😂', "Okay, I'll let you know 👍", 'Thanks 🙌'])],
+      [s, L(['Nos vemos 👋', '¡Éxito! 💪', '👍', '😄'], ['See you 👋', 'Good luck! 💪', '👍', '😄'])],
     ];
     lines.forEach(([who, opts], i) => this.time.delayedCall(2600 * (i + 1), () => this.sprites.get(who.employee.id) === who && who.say(pick(opts), 2800)));
   }
@@ -1096,7 +1109,7 @@ export class OfficeScene extends Phaser.Scene {
         const key = `${p.name}|${sp.employee.id}`;
         if ((this.greeted.get(key) ?? -Infinity) > this.time.now - 120_000) continue;
         this.greeted.set(key, this.time.now);
-        if (Math.random() < 0.5) sp.say(pick([`¡Hola ${p.name}! ${p.kind === 'dog' ? '🐶' : '🐱'}`, '❤️', p.kind === 'dog' ? '¿Quién es un buen perro?' : '¡Michi! 😺']), 2400);
+        if (Math.random() < 0.5) sp.say(pick(L([`¡Hola ${p.name}! ${p.kind === 'dog' ? '🐶' : '🐱'}`, '❤️', p.kind === 'dog' ? '¿Quién es un buen perro?' : '¡Michi! 😺'], [`Hi ${p.name}! ${p.kind === 'dog' ? '🐶' : '🐱'}`, '❤️', p.kind === 'dog' ? "Who's a good dog?" : 'Kitty! 😺'])), 2400);
       }
     }
     const all = [...this.sprites.values()].filter((s) => s.mode !== 'sit');
@@ -1111,7 +1124,7 @@ export class OfficeScene extends Phaser.Scene {
         this.greeted.set(key, now);
         const who = Math.random() < 0.5 ? a : b;
         if (who.mode === 'idle') who.gesture('wave', 1600);
-        who.say(pick(['👋', '¡Hola!', '¡Buenas! 👋', '😄']), 2000);
+        who.say(pick(L(['👋', '¡Hola!', '¡Buenas! 👋', '😄'], ['👋', 'Hi!', 'Hey there! 👋', '😄'])), 2000);
         return;
       }
     }
@@ -1122,7 +1135,7 @@ export class OfficeScene extends Phaser.Scene {
     if (all.length === 0) return;
     if (!isWorkTime(Date.now())) {
       // Después de la jornada, solo algún bostezo de vez en cuando.
-      if (Math.random() < 0.15) pick(all).say(pick(['💤', '🌙', '¡Hasta mañana!', '😴']));
+      if (Math.random() < 0.15) pick(all).say(pick(L(['💤', '🌙', '¡Hasta mañana!', '😴'], ['💤', '🌙', 'See you tomorrow!', '😴'])));
       return;
     }
     if (isLunchTime(Date.now())) {
@@ -1375,7 +1388,13 @@ export class OfficeScene extends Phaser.Scene {
     this.velocity = { x: 0, y: 0 };
     this.cameras.main.pan(c.x, c.y - 12, 700, 'Cubic.easeInOut');
     this.cameras.main.zoomTo(4, 700, 'Cubic.easeInOut');
-    bridge.emit('decor:hint', 'Elige un objeto de tu bodega y déjalo en tu puesto o en cualquier sala (menos Gerencia). Clic en uno tuyo para moverlo.');
+    bridge.emit(
+      'decor:hint',
+      L(
+        `Elige un objeto de tu bodega y déjalo en tu puesto o en cualquier sala (menos ${ROOMS.gerencia.name}). Clic en uno tuyo para moverlo.`,
+        `Pick an item from your storage and drop it at your desk or in any room (except ${ROOMS.gerencia.name}). Click one of yours to move it.`,
+      ),
+    );
   }
 
   private pickForDecor(itemId: string | null): void {
@@ -1384,7 +1403,7 @@ export class OfficeScene extends Phaser.Scene {
     this.decorPick = itemId;
     this.decorRot = 0;
     if (itemId !== null) {
-      bridge.emit('decor:hint', `Colocando ${ITEM_BY_ID[itemId].name}: clic para dejarlo · R gira · Esc cancela`);
+      bridge.emit('decor:hint', L(`Colocando ${ITEM_BY_ID[itemId].name}: clic para dejarlo · R gira · Esc cancela`, `Placing ${ITEM_BY_ID[itemId].name}: click to drop · R rotates · Esc cancels`));
       this.refreshGhost();
     }
   }
@@ -1485,7 +1504,7 @@ export class OfficeScene extends Phaser.Scene {
     this.decorRot = target.rot;
     this.plotItemSprites.get(e.id)?.get(target.uid)?.setVisible(false);
     bridge.emit('decor:holding', target.uid);
-    bridge.emit('decor:hint', `Moviendo ${ITEM_BY_ID[target.itemId].name}: clic para dejarlo · R gira · Supr guarda en bodega`);
+    bridge.emit('decor:hint', L(`Moviendo ${ITEM_BY_ID[target.itemId].name}: clic para dejarlo · R gira · Supr guarda en bodega`, `Moving ${ITEM_BY_ID[target.itemId].name}: click to drop · R rotates · Delete puts it in storage`));
     this.refreshGhost();
   }
 
@@ -1587,7 +1606,7 @@ export class OfficeScene extends Phaser.Scene {
         onComplete: () => this.tweens.add({ targets: c, alpha: 0, duration: 200, onComplete: () => c.destroy() }),
       });
     }
-    this.sprites.get(id)?.say(amount >= 50 ? '¡Wiii, gracias! 🤩' : '¡Gracias! 😄', 3000);
+    this.sprites.get(id)?.say(amount >= 50 ? L('¡Wiii, gracias! 🤩', 'Woohoo, thanks! 🤩') : L('¡Gracias! 😄', 'Thanks! 😄'), 3000);
   }
 
   private fxLevel(id: string, level: number): void {
@@ -1596,7 +1615,7 @@ export class OfficeScene extends Phaser.Scene {
     const sl = this.sprites.get(id);
     sl?.hop();
     if (sl?.mode === 'idle') sl.gesture('stretch', 1400);
-    const t = crispText(this, h.x, h.y - 16, `¡NIVEL ${level}!`, {
+    const t = crispText(this, h.x, h.y - 16, L(`¡NIVEL ${level}!`, `LEVEL ${level}!`), {
       fontSize: '10px',
       fontStyle: '900',
       color: '#ffffff',
@@ -1630,17 +1649,17 @@ export class OfficeScene extends Phaser.Scene {
       const from = getState().employees[fromId];
       const to = this.sprites.get(toId);
       to?.hop();
-      to?.say(`¡Gracias${from ? `, ${from.name.split(' ')[0]}` : ''}! 💖`, 3500);
+      to?.say(L(`¡Gracias${from ? `, ${from.name.split(' ')[0]}` : ''}! 💖`, `Thanks${from ? `, ${from.name.split(' ')[0]}` : ''}! 💖`), 3500);
       if (to?.mode === 'idle') to.gesture('wave', 1500);
     });
-    this.sprites.get(fromId)?.say('¡Bien hecho! 👏', 2500);
+    this.sprites.get(fromId)?.say(L('¡Bien hecho! 👏', 'Well done! 👏'), 2500);
   }
 
   private fxGift(fromId: string, toId: string, itemId: string): void {
     // Adornos del vestuario no tienen sprite propio: vuela una caja de regalo.
     const icon = ITEM_BY_ID[itemId] ? this.add.image(0, 0, itemKey(itemId, 0)).setScale(INV * 0.8) : this.add.image(0, 0, 'star').setScale(1.4).setTint(0xff6fb0);
     this.fly(fromId, toId, icon, () => {
-      this.sprites.get(toId)?.say(`¡Un regalo! 🎁 ${ITEM_BY_ID[itemId]?.name ?? ''}`, 4000);
+      this.sprites.get(toId)?.say(L(`¡Un regalo! 🎁 ${ITEM_BY_ID[itemId]?.name ?? ''}`, `A gift! 🎁 ${ITEM_BY_ID[itemId]?.name ?? ''}`), 4000);
       this.fxSparks(toId);
     });
     this.sprites.get(fromId)?.say('🎁', 2500);
@@ -1772,7 +1791,7 @@ export class OfficeScene extends Phaser.Scene {
       this.tweens.add({ targets: icon, scale: 1, duration: 450, ease: 'Back.Out' });
       objs.push(icon);
     }
-    const tag = crispText(this, h.x, h.y - 2, '¡NUEVO!', {
+    const tag = crispText(this, h.x, h.y - 2, L('¡NUEVO!', 'NEW!'), {
       fontFamily: NUM_FONT,
       fontSize: '6px',
       fontStyle: '900',
@@ -1825,7 +1844,7 @@ export class OfficeScene extends Phaser.Scene {
         },
       });
     }
-    this.sprites.get(id)?.say(`🏗️ +${amount} para la oficina`, 3000);
+    this.sprites.get(id)?.say(L(`🏗️ +${amount} para la oficina`, `🏗️ +${amount} for the office`), 3000);
   }
 
   /** Lleva `obj` de la cabeza de una persona a la de otra en arco y lo hace estallar al llegar. */

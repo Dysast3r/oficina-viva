@@ -5,6 +5,7 @@ import { officeScore, setFloor } from '../data/store';
 import type { Employee } from '../data/types';
 import { floorIconURL, itemIconURL } from '../game/pixel/textures';
 import { report } from './common';
+import { L } from '../i18n';
 
 /** Barra inferior del modo decoración: bodega, pisos y acciones. */
 export function DecorBar({ me, onShop, onDone }: { me: Employee; onShop: () => void; onDone: () => void }) {
@@ -33,26 +34,28 @@ export function DecorBar({ me, onShop, onDone }: { me: Employee; onShop: () => v
   return (
     <div className="decorbar">
       <div className="decor-top">
-        <span className="decor-title">🛠️ Decorando la oficina · ✨ {officeScore(me)} de estilo</span>
+        <span className="decor-title">
+          {L(`🛠️ Decorando la oficina · ✨ ${officeScore(me)} de estilo`, `🛠️ Decorating the office · ✨ ${officeScore(me)} style`)}
+        </span>
         <span className="decor-hint">{hint}</span>
         <span className="decor-actions">
           <button className="btn btn-small" onClick={() => bridge.emit('decor:rotate')} disabled={picked === null && holding === null}>
-            ⟲ Girar (R)
+            {L('⟲ Girar (R)', '⟲ Rotate (R)')}
           </button>
           <button className="btn btn-small" onClick={() => bridge.emit('decor:store-held')} disabled={holding === null}>
-            📦 A bodega
+            {L('📦 A bodega', '📦 To storage')}
           </button>
           <button className="btn btn-small" onClick={onShop}>
-            🛒 Tienda
+            {L('🛒 Tienda', '🛒 Shop')}
           </button>
           <button className="btn btn-small btn-primary" onClick={onDone}>
-            ✔ Listo
+            {L('✔ Listo', '✔ Done')}
           </button>
         </span>
       </div>
       <div className="decor-shelf">
-        <span className="shelf-label">Bodega</span>
-        {stock.length === 0 && <span className="hint">Vacía. Compra cosas en la tienda con tus monedas.</span>}
+        <span className="shelf-label">{L('Bodega', 'Storage')}</span>
+        {stock.length === 0 && <span className="hint">{L('Vacía. Compra cosas en la tienda con tus monedas.', 'Empty. Buy things in the shop with your coins.')}</span>}
         {stock.map(([id, n]) => (
           <button
             key={id}
@@ -68,9 +71,9 @@ export function DecorBar({ me, onShop, onDone }: { me: Employee; onShop: () => v
             <span className="slot-n">×{n}</span>
           </button>
         ))}
-        <span className="shelf-label">Piso</span>
-        <button className={`slot ${me.floor === 'sala' ? 'slot-on' : ''}`} title="Piso del área" onClick={() => report(setFloor('sala'))}>
-          <span className="slot-text">Área</span>
+        <span className="shelf-label">{L('Piso', 'Floor')}</span>
+        <button className={`slot ${me.floor === 'sala' ? 'slot-on' : ''}`} title={L('Piso del área', 'Area floor')} onClick={() => report(setFloor('sala'))}>
+          <span className="slot-text">{L('Área', 'Area')}</span>
         </button>
         {me.ownedFloors.map((f) => (
           <button

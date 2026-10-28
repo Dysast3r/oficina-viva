@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { bridge } from '../bridge';
 import { DAILY_BONUS } from '../data/catalog';
+import { feedText } from '../data/messages';
 import { TIME_ZONE, checkInBlockedReason, isWorkDay, officeClock, scheduleStatus } from '../data/schedule';
 import { useWeather } from '../data/sky';
 import { dayPhase, sunTimes, weatherIcon, weatherLabel } from '../data/weather';
@@ -23,6 +24,7 @@ import {
 import type { Employee } from '../data/types';
 import { AvatarImg, Coins, LevelBar, Progress, report, useNow } from './common';
 import { Icon, type IconName } from './icons';
+import { L, intlLocale } from '../i18n';
 
 /** Tarjeta superior izquierda: quién eres, fecha, hora, jornada y productividad del equipo. */
 export function ClockCard({ me, onProfile }: { me: Employee; onProfile: () => void }) {
@@ -31,8 +33,8 @@ export function ClockCard({ me, onProfile }: { me: Employee; onProfile: () => vo
   const weather = useWeather();
   const d = new Date(now);
   // Siempre la hora de la oficina (Santiago), aunque el computador esté en otra zona.
-  const day = d.toLocaleDateString('es-CL', { timeZone: TIME_ZONE, weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }).replace(/\./g, '');
-  const time = d.toLocaleTimeString('es-CL', { timeZone: TIME_ZONE, hour: '2-digit', minute: '2-digit' });
+  const day = d.toLocaleDateString(intlLocale(), { timeZone: TIME_ZONE, weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }).replace(/\./g, '');
+  const time = d.toLocaleTimeString(intlLocale(), { timeZone: TIME_ZONE, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
   const clock = officeClock(now);
   const sun = sunTimes(weather, Number(d.toLocaleDateString('en-US', { timeZone: TIME_ZONE, month: 'numeric' })) - 1);
   const phase = dayPhase(clock.minutes, sun.sunrise, sun.sunset);
@@ -48,7 +50,7 @@ export function ClockCard({ me, onProfile }: { me: Employee; onProfile: () => vo
           bridge.emit('camera:focus', me.id);
           onProfile();
         }}
-        title="Ver mi perfil"
+        title={L('Ver mi perfil', 'View my profile')}
       >
         <span className="me-face">
           <AvatarImg avatar={me.avatar} size={1.6} />
@@ -66,7 +68,7 @@ export function ClockCard({ me, onProfile }: { me: Employee; onProfile: () => vo
           <div className={`clock-shift ${shift.open ? 'shift-open' : ''}`}>{shift.text}</div>
         </div>
         {weather ? (
-          <span className={`clock-weather ${night ? 'sky-night' : 'sky-day'}`} title={`${weatherLabel(weather.code)} en Santiago · viento ${weather.wind} km/h`}>
+          <span className={`clock-weather ${night ? 'sky-night' : 'sky-day'}`} title={L(`${weatherLabel(weather.code)} en Santiago · viento ${weather.wind} km/h`, `${weatherLabel(weather.code)} in Santiago · wind ${weather.wind} km/h`)}>
             <span className="weather-icon">{weatherIcon(weather.code, night)}</span>
             <span className="weather-temp num">{weather.temp}°</span>
             <span className="weather-label">{weatherLabel(weather.code)}</span>
@@ -79,7 +81,7 @@ export function ClockCard({ me, onProfile }: { me: Employee; onProfile: () => vo
       </div>
       <div className="prod">
         <div className="prod-head">
-          <span>Productividad del equipo</span>
+          <span>{L('Productividad del equipo', 'Team productivity')}</span>
           <span className="num">{pct}%</span>
         </div>
         <div className="prod-track">
@@ -135,10 +137,10 @@ export function Objectives({ me, onOpen, onKudos, onShop, onChat }: { me: Employ
   if (!isWorkDay(today())) {
     return (
       <section className="hud-card objectives">
-        <h3>Misiones del día</h3>
-        <p className="obj-claimed">Hoy no es día laboral. ¡Disfruta el descanso! 🌴</p>
+        <h3>{L('Misiones del día', "Today's missions")}</h3>
+        <p className="obj-claimed">{L('Hoy no es día laboral. ¡Disfruta el descanso! 🌴', "Today isn't a workday. Enjoy the break! 🌴")}</p>
         <button className="link-btn" onClick={onOpen}>
-          Ver misiones semanales y logros →
+          {L('Ver misiones semanales y logros →', 'See weekly missions and achievements →')}
         </button>
       </section>
     );
@@ -146,14 +148,14 @@ export function Objectives({ me, onOpen, onKudos, onShop, onChat }: { me: Employ
   return (
     <section className="hud-card objectives">
       <h3>
-        Misiones del día
+        {L('Misiones del día', "Today's missions")}
         <button className="link-btn" onClick={onOpen}>
-          Ver todo
+          {L('Ver todo', 'See all')}
         </button>
       </h3>
       {me.lastCheckIn !== today() && (
         <button className="btn btn-small btn-block checkin-btn" disabled={checkInBlocked !== null} onClick={() => report(checkIn())}>
-          ☀️ {checkInBlocked ?? 'Marcar mi llegada'}
+          ☀️ {checkInBlocked ?? L('Marcar mi llegada', 'Check in')}
         </button>
       )}
       <ul>
@@ -163,15 +165,15 @@ export function Objectives({ me, onOpen, onKudos, onShop, onChat }: { me: Employ
       </ul>
       {canOpenChest(me) && (
         <button className="btn btn-small btn-block chest-btn" onClick={() => report(openChest())}>
-          🧰 Abrir cofre diario
+          🧰 {L('Abrir cofre diario', 'Open daily chest')}
         </button>
       )}
       {allDone && !claimed && (
         <button className="btn btn-gold btn-block bonus-btn" onClick={() => report(claimDailyBonus())}>
-          🎁 Cobrar bono +{DAILY_BONUS}
+          🎁 {L('Cobrar bono', 'Claim bonus')} +{DAILY_BONUS}
         </button>
       )}
-      {claimed && <p className="obj-claimed">¡Bono de hoy cobrado! Vuelve mañana.</p>}
+      {claimed && <p className="obj-claimed">{L('¡Bono de hoy cobrado! Vuelve mañana.', "Today's bonus claimed! Come back tomorrow.")}</p>}
     </section>
   );
 }
@@ -189,15 +191,15 @@ export function MeetingBanner({ me }: { me: Employee }) {
       <div className="meeting-banner meeting-live" role="status">
         <span className="live-dot" />
         <span>
-          <b>Reunión en curso:</b> {meeting.title}
-          <small> · {meeting.present.length} en la sala</small>
+          <b>{L('Reunión en curso:', 'Meeting in progress:')}</b> {meeting.title}
+          <small> · {L(`${meeting.present.length} en la sala`, `${meeting.present.length} in the room`)}</small>
         </span>
         <button className="btn btn-small" onClick={() => bridge.emit('camera:room', 'reuniones')}>
-          Ver sala
+          {L('Ver sala', 'View room')}
         </button>
         {canEnd && (
           <button className="btn btn-small btn-primary" onClick={() => report(endMeeting(meeting.id))}>
-            Terminar reunión
+            {L('Terminar reunión', 'End meeting')}
           </button>
         )}
       </div>
@@ -206,7 +208,7 @@ export function MeetingBanner({ me }: { me: Employee }) {
   if (upcoming) {
     return (
       <div className="meeting-banner" role="status">
-        🗓️ <b>Pronto:</b> {upcoming.title} · {meetingWhen(upcoming.start)}
+        🗓️ <b>{L('Pronto:', 'Coming up:')}</b> {upcoming.title} · {meetingWhen(upcoming.start)}
       </div>
     );
   }
@@ -229,7 +231,7 @@ export function BellButton({ onClick, active }: { onClick: () => void; active: b
     prev.current = unread;
   }, [unread]);
   return (
-    <button className={`hud-round ${active ? 'hud-round-on' : ''} ${shake ? 'shake' : ''}`} onClick={onClick} aria-label={`Notificaciones (${unread} sin leer)`}>
+    <button className={`hud-round ${active ? 'hud-round-on' : ''} ${shake ? 'shake' : ''}`} onClick={onClick} aria-label={L(`Notificaciones (${unread} sin leer)`, `Notifications (${unread} unread)`)}>
       <Icon name="bell" />
       {unread > 0 && <span className="count-badge">{unread > 99 ? '99+' : unread}</span>}
     </button>
@@ -254,7 +256,7 @@ export function Ticker() {
   if (latest === undefined || !visible) return null;
   return (
     <button key={latest.id} className="ticker" onClick={() => bridge.emit('camera:focus', latest.targetId)}>
-      {latest.text}
+      {feedText(latest)}
     </button>
   );
 }
@@ -271,7 +273,7 @@ export interface NavItem {
 
 export function BottomNav({ items }: { items: NavItem[] }) {
   return (
-    <nav className="bottom-nav" aria-label="Navegación principal">
+    <nav className="bottom-nav" aria-label={L('Navegación principal', 'Main navigation')}>
       {items.map((it) => (
         <button key={it.id} className={`nav-btn ${it.active ? 'nav-on' : ''}`} onClick={it.onClick}>
           <Icon name={it.icon} />

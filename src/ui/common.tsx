@@ -3,6 +3,7 @@ import { LEVEL_TITLES, ROOMS, levelForXp, xpForLevel } from '../data/catalog';
 import type { Result } from '../data/store';
 import type { Avatar, Employee } from '../data/types';
 import { avatarURL, iconURL } from '../game/pixel/textures';
+import { L, LANGS, intlLocale, lang, setLang } from '../i18n';
 
 /** Personaje como imagen; `size` multiplica su tamaño de mundo (16×35, con espacio arriba para sombreros). */
 export function AvatarImg({ avatar, size = 3, pose = 'front' }: { avatar: Avatar; size?: number; pose?: 'front' | 'back' }) {
@@ -12,7 +13,7 @@ export function AvatarImg({ avatar, size = 3, pose = 'front' }: { avatar: Avatar
 }
 
 export function Coin({ size = 2 }: { size?: number }) {
-  return <img className="pixel coin-icon" src={iconURL('coin')} width={8 * size} height={8 * size} alt="monedas" />;
+  return <img className="pixel coin-icon" src={iconURL('coin')} width={8 * size} height={8 * size} alt={L('monedas', 'coins')} />;
 }
 
 /** Número que corre hasta su nuevo valor (y brilla si sube). */
@@ -39,7 +40,7 @@ export function AnimatedNumber({ value }: { value: number }) {
     raf = requestAnimationFrame(step);
     return () => cancelAnimationFrame(raf);
   }, [value]);
-  return <span className={flash ? `num-flash num-${flash}` : undefined}>{shown.toLocaleString('es-CL')}</span>;
+  return <span className={flash ? `num-flash num-${flash}` : undefined}>{shown.toLocaleString(intlLocale())}</span>;
 }
 
 export function Coins({ value }: { value: number }) {
@@ -66,8 +67,8 @@ export function LevelBar({ xp }: { xp: number }) {
   const to = xpForLevel(level + 1);
   const pct = level >= 20 ? 100 : Math.round(((xp - from) / (to - from)) * 100);
   return (
-    <div className="levelbar" title={`${xp} XP · faltan ${Math.max(0, to - xp)} para nivel ${level + 1}`}>
-      <span className="levelbar-lv">Nv {level}</span>
+    <div className="levelbar" title={L(`${xp} XP · faltan ${Math.max(0, to - xp)} para nivel ${level + 1}`, `${xp} XP · ${Math.max(0, to - xp)} to level ${level + 1}`)}>
+      <span className="levelbar-lv">{L('Nv', 'Lv')} {level}</span>
       <span className="levelbar-track">
         <span className="levelbar-fill" style={{ width: `${pct}%` }} />
       </span>
@@ -107,9 +108,9 @@ export class SafeBoundary extends Component<{ children: ReactNode; label?: strin
     if (!this.state.failed) return this.props.children;
     return (
       <div className="toast toast-err safe-fail" role="alert">
-        Algo falló en {this.props.label ?? 'esta parte'}.{' '}
+        {L(`Algo falló en ${this.props.label ?? 'esta parte'}.`, `Something went wrong in ${this.props.label ?? 'this section'}.`)}{' '}
         <button className="link-btn" onClick={() => this.setState({ failed: false })}>
-          Reintentar
+          {L('Reintentar', 'Retry')}
         </button>
       </div>
     );
@@ -126,12 +127,12 @@ export function Panel({ title, onClose, children, wide }: { title: string; onClo
     <aside className={`panel ${wide ? 'panel-wide' : ''}`}>
       <header className="panel-head">
         <h2>{title}</h2>
-        <button className="btn-icon" onClick={onClose} aria-label="Cerrar">
+        <button className="btn-icon" onClick={onClose} aria-label={L('Cerrar', 'Close')}>
           ✕
         </button>
       </header>
       <div className="panel-body">
-        <SafeBoundary label={`el panel ${title}`}>{children}</SafeBoundary>
+        <SafeBoundary label={L(`el panel ${title}`, `the ${title} panel`)}>{children}</SafeBoundary>
       </div>
     </aside>
   );
@@ -208,6 +209,27 @@ export function Toasts() {
   );
 }
 
+/** Selector de idioma: cambiarlo recarga la página. */
+export function LangSwitch({ className = '' }: { className?: string }) {
+  const current = lang();
+  return (
+    <div className={`seg lang-switch ${className}`} role="group" aria-label={L('Idioma', 'Language')}>
+      {LANGS.map((l) => (
+        <button
+          key={l.id}
+          type="button"
+          lang={l.id}
+          className={`seg-btn ${current === l.id ? 'seg-on' : ''}`}
+          aria-pressed={current === l.id}
+          onClick={() => setLang(l.id)}
+        >
+          {l.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export function useNow(intervalMs = 30_000): number {
   const [now, setNow] = useState(Date.now());
   useEffect(() => {
@@ -219,10 +241,10 @@ export function useNow(intervalMs = 30_000): number {
 
 export function timeAgo(ts: number, now: number): string {
   const s = Math.max(0, Math.round((now - ts) / 1000));
-  if (s < 60) return 'recién';
+  if (s < 60) return L('recién', 'just now');
   const m = Math.round(s / 60);
-  if (m < 60) return `hace ${m} min`;
+  if (m < 60) return L(`hace ${m} min`, `${m} min ago`);
   const h = Math.round(m / 60);
-  if (h < 24) return `hace ${h} h`;
-  return `hace ${Math.round(h / 24)} d`;
+  if (h < 24) return L(`hace ${h} h`, `${h} h ago`);
+  return L(`hace ${Math.round(h / 24)} d`, `${Math.round(h / 24)} d ago`);
 }

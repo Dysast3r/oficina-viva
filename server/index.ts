@@ -1,4 +1,5 @@
 import express, { type NextFunction, type Request, type Response } from 'express';
+import { AsyncLocalStorage } from 'node:async_hooks';
 import { existsSync, writeFileSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { dirname, resolve } from 'node:path';
@@ -14,7 +15,9 @@ import {
   type NotifyReq,
   type Outcome,
 } from '../src/data/logic';
+import { spanishText } from '../src/data/messages';
 import { createSeedState, newUid } from '../src/data/seed';
+import { L, parseLang, setLangProvider, type Lang } from '../src/i18n';
 import type { AppNotification, ChatMessage, GameState } from '../src/data/types';
 import type { Weather } from '../src/data/weather';
 import {
@@ -101,8 +104,10 @@ function deliver(reqs: NotifyReq[]): void {
   for (const r of reqs) {
     const to = r.to === 'all' ? Object.keys(state.employees) : r.to.filter((id) => state.employees[id] !== undefined);
     for (const id of to) {
-      const n: AppNotification = { id: newUid('n'), ts: Date.now(), kind: r.kind, title: r.title, read: false };
-      if (r.body) n.body = r.body;
+      // El texto en español queda de respaldo; cada cliente lo muestra en su idioma con `msg`.
+      const n: AppNotification = { id: newUid('n'), ts: Date.now(), kind: r.kind, title: spanishText(r.title), read: false };
+      if (r.body) n.body = spanishText(r.body);
+      n.msg = r.body ? { title: r.title, body: r.body } : { title: r.title };
       if (r.data) n.data = r.data;
       db.addNotification(id, n);
       sendTo([id], 'notify', n);
@@ -155,6 +160,13 @@ const loginLimiter = createRateLimiter();
 app.disable('x-powered-by');
 // Detrás de un proxy (Nginx, Render, Railway…) para ver la IP real y saber si es https.
 if (process.env.TRUST_PROXY === '1') app.set('trust proxy', 1);
+// Idioma de cada petición: los mensajes de respuesta salen en el de quien pregunta.
+const requestLang = new AsyncLocalStorage<Lang>();
+setLangProvider(() => requestLang.getStore() ?? 'es');
+app.use((req, _res, next) => {
+  requestLang.run(parseLang(req.get('X-Lang')) ?? parseLang(req.get('Accept-Language')) ?? 'es', next);
+});
+
 app.use((_req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('Referrer-Policy', 'same-origin');
@@ -169,7 +181,7 @@ api.use(express.json({ limit: '16kb' }));
 // sin permiso CORS, así que no puede actuar con la cookie de otra persona.
 api.use((req, res, next) => {
   if (req.method !== 'GET' && req.get('X-Oficina-Viva') !== '1') {
-    res.status(403).json({ ok: false, message: 'Solicitud no permitida.' });
+    res.status(403).json({ ok: false, message: L('Solicitud no permitida.', 'Request not allowed.') });
     return;
   }
   next();
@@ -204,11 +216,11 @@ function requireAuth(ready: boolean) {
   return (req: Request, res: Response, next: NextFunction) => {
     const auth = authOf(req);
     if (auth === undefined) {
-      res.status(401).json({ ok: false, message: 'Tu sesión expiró. Vuelve a entrar.' });
+      res.status(401).json({ ok: false, message: L('Tu sesión expiró. Vuelve a entrar.', 'Your session expired. Please log in again.') });
       return;
     }
     if (ready && auth.account.mustChange) {
-      res.status(403).json({ ok: false, message: 'Primero cambia tu contraseña temporal.', mustChange: true });
+      res.status(403).json({ ok: false, message: L('Primero cambia tu contraseña temporal.', 'Change your temporary password first.'), mustChange: true });
       return;
     }
     res.locals.auth = auth;
@@ -219,7 +231,7 @@ function requireAuth(ready: boolean) {
 function requireAdmin(req: Request, res: Response, next: NextFunction) {
   requireAuth(true)(req, res, () => {
     if (state.employees[(res.locals.auth as Auth).account.employeeId]?.role !== 'admin') {
-      res.status(403).json({ ok: false, message: 'Solo administradores.' });
+      res.status(403).json({ ok: false, message: L('Solo administradores.', 'Admins only.') });
       return;
     }
     next();
@@ -296,7 +308,7 @@ api.get('/session', (req, res) => {
 api.post('/login', async (req, res) => {
   const ip = req.ip ?? 'unknown';
   if (loginLimiter.blocked(ip)) {
-    res.status(429).json({ ok: false, message: 'Demasiados intentos. Espera unos minutos.' });
+    res.status(429).json({ ok: false, message: L('Demasiados intentos. Espera unos minutos.', 'Too many attempts. Wait a few minutes.') });
     return;
   }
   const username = typeof req.body?.username === 'string' ? req.body.username.trim().slice(0, 60) : '';
@@ -306,7 +318,7 @@ api.post('/login', async (req, res) => {
   const valid = await verifyPassword(password, account?.passHash ?? DUMMY_HASH);
   if (account === undefined || !valid || state.employees[account.employeeId] === undefined) {
     loginLimiter.fail(ip);
-    res.status(401).json({ ok: false, message: 'Usuario o contraseña incorrectos.' });
+    res.status(401).json({ ok: false, message: L('Usuario o contraseña incorrectos.', 'Wrong username or password.') });
     return;
   }
   loginLimiter.clear(ip);
@@ -326,20 +338,20 @@ api.post('/password', requireAuth(false), async (req, res) => {
   const current = typeof req.body?.current === 'string' ? req.body.current : '';
   const next = typeof req.body?.next === 'string' ? req.body.next : '';
   if (!(await verifyPassword(current, account.passHash))) {
-    res.status(400).json({ ok: false, message: 'La contraseña actual no coincide.' });
+    res.status(400).json({ ok: false, message: L('La contraseña actual no coincide.', "The current password doesn't match.") });
     return;
   }
   if (next.length < MIN_PASSWORD || next.length > 200) {
-    res.status(400).json({ ok: false, message: `La nueva contraseña debe tener al menos ${MIN_PASSWORD} caracteres.` });
+    res.status(400).json({ ok: false, message: L(`La nueva contraseña debe tener al menos ${MIN_PASSWORD} caracteres.`, `The new password must be at least ${MIN_PASSWORD} characters long.`) });
     return;
   }
   if (next === current) {
-    res.status(400).json({ ok: false, message: 'Elige una contraseña distinta a la actual.' });
+    res.status(400).json({ ok: false, message: L('Elige una contraseña distinta a la actual.', 'Choose a password different from the current one.') });
     return;
   }
   db.setPassword(account.employeeId, await hashPassword(next), false);
   db.deleteOtherSessions(account.employeeId, tokenHash);
-  res.json({ ok: true, message: 'Contraseña actualizada.', user: sessionInfo({ ...account, mustChange: false }) });
+  res.json({ ok: true, message: L('Contraseña actualizada.', 'Password updated.'), user: sessionInfo({ ...account, mustChange: false }) });
 });
 
 // --- Mundo ------------------------------------------------------------------
@@ -371,7 +383,7 @@ api.post('/action', requireAuth(true), (req, res) => {
   const action = parseAction(req.body?.action);
   const actionId = typeof req.body?.id === 'string' ? req.body.id.slice(0, 40) : undefined;
   if (action === null) {
-    res.status(400).json({ ok: false, message: 'Acción no válida.' });
+    res.status(400).json({ ok: false, message: L('Acción no válida.', 'Invalid action.') });
     return;
   }
   const out = applyAction(state, me(res), action);
@@ -394,7 +406,7 @@ api.post('/notifications/read', requireAuth(true), (req, res) => {
   if (ids === 'all') db.readNotifications(me(res), 'all');
   else if (Array.isArray(ids) && ids.length <= 200) db.readNotifications(me(res), ids.map(parseId).filter((x): x is string => x !== null));
   else {
-    res.status(400).json({ ok: false, message: 'Solicitud no válida.' });
+    res.status(400).json({ ok: false, message: L('Solicitud no válida.', 'Invalid request.') });
     return;
   }
   res.json({ ok: true });
@@ -423,7 +435,7 @@ api.get('/chat/general', requireAuth(true), (req, res) => {
 api.get('/chat/dm/:other', requireAuth(true), (req, res) => {
   const other = parseId(req.params.other);
   if (other === null || state.employees[other] === undefined) {
-    res.status(404).json({ ok: false, message: 'Colaborador no encontrado.' });
+    res.status(404).json({ ok: false, message: L('Colaborador no encontrado.', 'Team member not found.') });
     return;
   }
   res.json(db.conversation(me(res), other, beforeOf(req.query.before), PAGE));
@@ -436,7 +448,7 @@ api.get('/chat/summary', requireAuth(true), (_req, res) => {
 api.post('/chat/read', requireAuth(true), (req, res) => {
   const other = parseId(req.body?.with);
   if (other === null) {
-    res.status(400).json({ ok: false, message: 'Solicitud no válida.' });
+    res.status(400).json({ ok: false, message: L('Solicitud no válida.', 'Invalid request.') });
     return;
   }
   db.markDmRead(me(res), other, Date.now());
@@ -448,11 +460,11 @@ api.post('/chat', requireAuth(true), (req, res) => {
   const text = parseChatText(req.body?.text);
   const to = req.body?.to === undefined || req.body?.to === null ? undefined : parseId(req.body.to);
   if (text === null || to === null || (to !== undefined && (state.employees[to] === undefined || to === from))) {
-    res.status(400).json({ ok: false, message: 'Mensaje no válido.' });
+    res.status(400).json({ ok: false, message: L('Mensaje no válido.', 'Invalid message.') });
     return;
   }
   if (!chatAllowed(from)) {
-    res.status(429).json({ ok: false, message: 'Vas muy rápido: espera un momento.' });
+    res.status(429).json({ ok: false, message: L('Vas muy rápido: espera un momento.', "You're going too fast: wait a moment.") });
     return;
   }
   const msg: ChatMessage = { id: newUid('m'), ts: Date.now(), from, text, ...(to ? { to } : {}) };
@@ -478,11 +490,11 @@ api.get('/admin/accounts', requireAdmin, (_req, res) => {
 api.post('/admin/employees', requireAdmin, async (req, res) => {
   const input = parseNewEmployee(req.body);
   if (input === null) {
-    res.status(400).json({ ok: false, message: 'Datos incompletos.' });
+    res.status(400).json({ ok: false, message: L('Datos incompletos.', 'Missing data.') });
     return;
   }
   if (input.username !== undefined && (!validUsername(input.username) || db.accountByName(input.username))) {
-    res.status(400).json({ ok: false, message: 'Ese usuario no es válido o ya existe (letras, números, punto o guion; 3 a 40).' });
+    res.status(400).json({ ok: false, message: L('Ese usuario no es válido o ya existe (letras, números, punto o guion; 3 a 40).', 'That username is invalid or already taken (letters, numbers, dot or hyphen; 3 to 40).') });
     return;
   }
   const out = addEmployee(state, me(res), input.name, input.title, input.dept, input.role, input.body);
@@ -505,12 +517,12 @@ api.post('/admin/employees/:id', requireAdmin, (req, res) => {
   const input = parseEmployeeEdit(req.body);
   const account = db.accountById(id);
   if (input === null || account === undefined) {
-    res.status(400).json({ ok: false, message: 'Datos incompletos.' });
+    res.status(400).json({ ok: false, message: L('Datos incompletos.', 'Missing data.') });
     return;
   }
   const other = db.accountByName(input.username);
   if (!validUsername(input.username) || (other && other.employeeId !== id)) {
-    res.status(400).json({ ok: false, message: 'Ese usuario no es válido o ya existe.' });
+    res.status(400).json({ ok: false, message: L('Ese usuario no es válido o ya existe.', 'That username is invalid or already taken.') });
     return;
   }
   const out = editEmployee(state, me(res), id, input);
@@ -545,18 +557,18 @@ api.post('/admin/employees/:id/password', requireAdmin, async (req, res) => {
   const id = String(req.params.id);
   const account = db.accountById(id);
   if (account === undefined) {
-    res.status(404).json({ ok: false, message: 'Cuenta no encontrada.' });
+    res.status(404).json({ ok: false, message: L('Cuenta no encontrada.', 'Account not found.') });
     return;
   }
   const password = tempPassword();
   db.setPassword(id, await hashPassword(password), true);
   db.deleteOtherSessions(id);
   dropStreamsOf(id);
-  res.json({ ok: true, message: 'Contraseña restablecida.', username: account.username, password });
+  res.json({ ok: true, message: L('Contraseña restablecida.', 'Password reset.'), username: account.username, password });
 });
 
 api.use((_req, res) => {
-  res.status(404).json({ ok: false, message: 'No encontrado.' });
+  res.status(404).json({ ok: false, message: L('No encontrado.', 'Not found.') });
 });
 
 app.use('/api', api);
@@ -577,7 +589,7 @@ if (PROD) {
 
 app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
   console.error(err);
-  if (!res.headersSent) res.status(500).json({ ok: false, message: 'Error del servidor.' });
+  if (!res.headersSent) res.status(500).json({ ok: false, message: L('Error del servidor.', 'Server error.') });
 });
 
 http.on('error', (err: NodeJS.ErrnoException) => {

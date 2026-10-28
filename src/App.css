@@ -2696,3 +2696,12 @@ textarea.input {
     transition: none !important;
   }
 }
+
+/* Selector de idioma */
+.lang-switch .seg-btn {
+  font-size: 12px;
+}
+.login-lang {
+  justify-content: flex-end;
+  margin: -6px -10px 6px 0;
+}

@@ -66,6 +66,9 @@ export function openDb(path: string) {
       PRIMARY KEY (employee_id, other_id)
     );
   `);
+  // Bases anteriores a la traducción: título y cuerpo para mostrar en cada idioma.
+  const notificationCols = db.prepare('PRAGMA table_info(notifications)').all().map((c) => String(c.name));
+  if (!notificationCols.includes('msg')) db.exec('ALTER TABLE notifications ADD COLUMN msg TEXT');
 
   const q = {
     getWorld: db.prepare('SELECT rev, state FROM world WHERE id = 1'),
@@ -83,7 +86,7 @@ export function openDb(path: string) {
     deleteSessionsOf: db.prepare('DELETE FROM sessions WHERE employee_id = ? AND token_hash <> ?'),
     purgeSessions: db.prepare('DELETE FROM sessions WHERE expires < ?'),
 
-    insertNotification: db.prepare('INSERT INTO notifications (id, employee_id, ts, kind, title, body, data, read) VALUES (?, ?, ?, ?, ?, ?, ?, 0)'),
+    insertNotification: db.prepare('INSERT INTO notifications (id, employee_id, ts, kind, title, body, data, msg, read) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0)'),
     notifications: db.prepare('SELECT * FROM notifications WHERE employee_id = ? ORDER BY ts DESC LIMIT ?'),
     readNotification: db.prepare('UPDATE notifications SET read = 1 WHERE employee_id = ? AND id = ?'),
     readAllNotifications: db.prepare('UPDATE notifications SET read = 1 WHERE employee_id = ?'),
@@ -120,6 +123,7 @@ export function openDb(path: string) {
     title: String(r.title),
     ...(r.body != null ? { body: String(r.body) } : {}),
     ...(r.data != null ? { data: JSON.parse(String(r.data)) as AppNotification['data'] } : {}),
+    ...(r.msg != null ? { msg: JSON.parse(String(r.msg)) as AppNotification['msg'] } : {}),
     read: Number(r.read) === 1,
   });
 
@@ -191,7 +195,7 @@ export function openDb(path: string) {
     },
 
     addNotification(employeeId: string, n: AppNotification): void {
-      q.insertNotification.run(n.id, employeeId, n.ts, n.kind, n.title, n.body ?? null, n.data ? JSON.stringify(n.data) : null);
+      q.insertNotification.run(n.id, employeeId, n.ts, n.kind, n.title, n.body ?? null, n.data ? JSON.stringify(n.data) : null, n.msg ? JSON.stringify(n.msg) : null);
     },
     notifications: (employeeId: string, limit = 60): AppNotification[] => q.notifications.all(employeeId, limit).map(toNotification),
     readNotifications(employeeId: string, ids: string[] | 'all'): void {

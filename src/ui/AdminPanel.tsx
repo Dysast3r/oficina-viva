@@ -15,8 +15,12 @@ import {
 } from '../data/store';
 import type { DeptId, Employee, Role } from '../data/types';
 import { AvatarImg, Panel, report } from './common';
+import { L } from '../i18n';
 
-const ROLE_LABEL: Record<Role, string> = { colaborador: 'Colaborador/a', jefatura: 'Jefatura', gerente: 'Gerencia', admin: 'Administración' };
+const ROLE_LABEL: Record<Role, string> = L(
+  { colaborador: 'Colaborador/a', jefatura: 'Jefatura', gerente: 'Gerencia', admin: 'Administración' },
+  { colaborador: 'Team member', jefatura: 'Team lead', gerente: 'Management', admin: 'Admin' },
+);
 
 function RoleSelect({ value, onChange }: { value: Role; onChange: (r: Role) => void }) {
   return (
@@ -35,16 +39,18 @@ function CredentialsCard({ who, creds, onClose }: { who: string; creds: Credenti
   return (
     <div className="credentials" role="status">
       <p>
-        Entrégale estos datos a <b>{who}</b>. Al entrar se le pedirá crear su propia contraseña.
+        {L('Entrégale estos datos a ', 'Give these details to ')}
+        <b>{who}</b>
+        {L('. Al entrar se le pedirá crear su propia contraseña.', ". They'll be asked to create their own password when they log in.")}
       </p>
       <p>
-        Usuario: <code>{creds.username}</code>
+        {L('Usuario', 'Username')}: <code>{creds.username}</code>
         <br />
-        Contraseña temporal: <code>{creds.password}</code>
+        {L('Contraseña temporal', 'Temporary password')}: <code>{creds.password}</code>
       </p>
-      <p className="hint">No se vuelve a mostrar: si se pierde, restablécela de nuevo.</p>
+      <p className="hint">{L('No se vuelve a mostrar: si se pierde, restablécela de nuevo.', "It won't be shown again: if it's lost, reset it again.")}</p>
       <button className="btn btn-small" onClick={onClose}>
-        Listo, ya la anoté
+        {L('Listo, ya la anoté', "Done, I've written it down")}
       </button>
     </div>
   );
@@ -59,10 +65,10 @@ function EditRow({ e, username, onDone }: { e: Employee; username: string; onDon
 
   return (
     <div className="admin-edit">
-      <input className="input" aria-label="Nombre" value={name} onChange={(ev) => setName(ev.target.value)} />
-      <input className="input" aria-label="Cargo" value={title} onChange={(ev) => setTitle(ev.target.value)} />
+      <input className="input" aria-label={L('Nombre', 'Name')} value={name} onChange={(ev) => setName(ev.target.value)} />
+      <input className="input" aria-label={L('Cargo', 'Job title')} value={title} onChange={(ev) => setTitle(ev.target.value)} />
       <div className="row-fields">
-        <input className="input" aria-label="Usuario" value={user} onChange={(ev) => setUser(ev.target.value)} />
+        <input className="input" aria-label={L('Usuario', 'Username')} value={user} onChange={(ev) => setUser(ev.target.value)} />
         <RoleSelect value={role} onChange={setRole} />
         <button
           className="btn btn-primary"
@@ -74,7 +80,7 @@ function EditRow({ e, username, onDone }: { e: Employee; username: string; onDon
             if (ok) onDone();
           }}
         >
-          Guardar
+          {L('Guardar', 'Save')}
         </button>
       </div>
     </div>
@@ -114,10 +120,10 @@ export function AdminPanel({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <Panel title="Administración" onClose={onClose}>
+    <Panel title={L('Administración', 'Admin')} onClose={onClose}>
       {issued && <CredentialsCard who={issued.who} creds={issued.creds} onClose={() => setIssued(null)} />}
 
-      <h4 className="section">Puestos por área</h4>
+      <h4 className="section">{L('Puestos por área', 'Desks by area')}</h4>
       <ul className="plain">
         {DEPTS.map((d) => {
           const used = list.filter((e) => e.dept === d).length;
@@ -126,18 +132,18 @@ export function AdminPanel({ onClose }: { onClose: () => void }) {
               <span className="dept-tag" style={{ background: ROOMS[d].color }}>
                 {ROOMS[d].name}
               </span>{' '}
-              {used} de {plotCount(d)} puestos ocupados
+              {L(`${used} de ${plotCount(d)} puestos ocupados`, `${used} of ${plotCount(d)} desks taken`)}
             </li>
           );
         })}
       </ul>
 
-      <h4 className="section">Agregar colaborador</h4>
-      <input className="input" placeholder="Nombre y apellido" value={name} onChange={(e) => setName(e.target.value)} />
-      <input className="input" placeholder="Cargo" value={title} onChange={(e) => setTitle(e.target.value)} />
+      <h4 className="section">{L('Agregar colaborador', 'Add team member')}</h4>
+      <input className="input" placeholder={L('Nombre y apellido', 'First and last name')} value={name} onChange={(e) => setName(e.target.value)} />
+      <input className="input" placeholder={L('Cargo', 'Job title')} value={title} onChange={(e) => setTitle(e.target.value)} />
       <input
         className="input"
-        placeholder="Usuario (opcional: nombre.apellido)"
+        placeholder={L('Usuario (opcional: nombre.apellido)', 'Username (optional: first.last)')}
         autoCapitalize="none"
         spellCheck={false}
         value={username}
@@ -148,22 +154,27 @@ export function AdminPanel({ onClose }: { onClose: () => void }) {
           {DEPTS.map((d) => (
             <option key={d} value={d} disabled={freePlot(d) === null}>
               {ROOMS[d].name}
-              {freePlot(d) === null ? ' (lleno)' : ''}
+              {freePlot(d) === null ? L(' (lleno)', ' (full)') : ''}
             </option>
           ))}
         </select>
         <RoleSelect value={role} onChange={setRole} />
         <select className="input" value={body} onChange={(e) => setBody(Number(e.target.value) as 0 | 1)}>
-          <option value={1}>Mujer</option>
-          <option value={0}>Hombre</option>
+          <option value={1}>{L('Mujer', 'Woman')}</option>
+          <option value={0}>{L('Hombre', 'Man')}</option>
         </select>
       </div>
       <button className="btn btn-primary btn-block" disabled={busy || !name.trim()} onClick={add}>
-        {busy ? 'Creando…' : 'Agregar y crear cuenta'}
+        {busy ? L('Creando…', 'Creating…') : L('Agregar y crear cuenta', 'Add and create account')}
       </button>
 
-      <h4 className="section">Equipo</h4>
-      <p className="hint">Para reemplazar a alguien de ejemplo, edita su nombre y usuario y restablece su contraseña.</p>
+      <h4 className="section">{L('Equipo', 'Team')}</h4>
+      <p className="hint">
+        {L(
+          'Para reemplazar a alguien de ejemplo, edita su nombre y usuario y restablece su contraseña.',
+          'To replace a sample person, edit their name and username and reset their password.',
+        )}
+      </p>
       <ul className="admin-list">
         {list.map((e) => {
           const acc = accountOf(e.id);
@@ -177,23 +188,23 @@ export function AdminPanel({ onClose }: { onClose: () => void }) {
                   <br />
                   {acc ? (
                     <>
-                      usuario <b style={{ display: 'inline' }}>{acc.username}</b>
-                      {acc.mustChange ? ' · contraseña temporal' : ''}
+                      {L('usuario', 'username')} <b style={{ display: 'inline' }}>{acc.username}</b>
+                      {acc.mustChange ? L(' · contraseña temporal', ' · temporary password') : ''}
                     </>
                   ) : (
-                    'sin cuenta'
+                    L('sin cuenta', 'no account')
                   )}
                 </small>
               </span>
-              <button className="btn-icon" aria-label={`Editar a ${e.name}`} title="Editar" onClick={() => setEditing(editing === e.id ? null : e.id)}>
+              <button className="btn-icon" aria-label={L(`Editar a ${e.name}`, `Edit ${e.name}`)} title={L('Editar', 'Edit')} onClick={() => setEditing(editing === e.id ? null : e.id)}>
                 ✏️
               </button>
               <button
                 className="btn-icon"
-                aria-label={`Restablecer contraseña de ${e.name}`}
-                title="Restablecer contraseña"
+                aria-label={L(`Restablecer contraseña de ${e.name}`, `Reset ${e.name}'s password`)}
+                title={L('Restablecer contraseña', 'Reset password')}
                 onClick={async () => {
-                  if (!window.confirm(`¿Crear una contraseña temporal nueva para ${e.name}? Se cerrarán sus sesiones abiertas.`)) return;
+                  if (!window.confirm(L(`¿Crear una contraseña temporal nueva para ${e.name}? Se cerrarán sus sesiones abiertas.`, `Create a new temporary password for ${e.name}? Their open sessions will be closed.`))) return;
                   const r = await resetPassword(e.id);
                   if (report(r)) {
                     setIssued({ who: e.name, creds: r });
@@ -206,10 +217,10 @@ export function AdminPanel({ onClose }: { onClose: () => void }) {
               {e.id !== meId && (
                 <button
                   className="btn-icon"
-                  aria-label={`Eliminar a ${e.name}`}
-                  title="Eliminar"
+                  aria-label={L(`Eliminar a ${e.name}`, `Remove ${e.name}`)}
+                  title={L('Eliminar', 'Remove')}
                   onClick={async () => {
-                    if (window.confirm(`¿Eliminar a ${e.name}? Se pierden su puesto, sus monedas y su cuenta.`)) {
+                    if (window.confirm(L(`¿Eliminar a ${e.name}? Se pierden su puesto, sus monedas y su cuenta.`, `Remove ${e.name}? Their desk, coins and account will be lost.`))) {
                       if (report(await removeEmployee(e.id))) refresh();
                     }
                   }}
@@ -235,7 +246,7 @@ export function AdminPanel({ onClose }: { onClose: () => void }) {
       </ul>
 
       <button className="btn btn-block" onClick={logout}>
-        Cerrar sesión
+        {L('Cerrar sesión', 'Log out')}
       </button>
     </Panel>
   );

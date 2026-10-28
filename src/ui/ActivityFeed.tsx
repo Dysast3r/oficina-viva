@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
 import { bridge } from '../bridge';
+import { feedText, notificationText } from '../data/messages';
 import { markNotificationsRead, useNotifications } from '../data/social';
 import { useGame } from '../data/store';
 import type { ActivityKind, NotificationKind } from '../data/types';
 import { Panel, timeAgo, useNow } from './common';
+import { L } from '../i18n';
 
 const FEED_ICON: Record<ActivityKind, string> = {
   award: '🏅',
@@ -48,19 +50,21 @@ export function NotificationsPanel({ onClose, onOpenAgenda }: { onClose: () => v
   }, [tab, unread]);
 
   return (
-    <Panel title="Notificaciones" onClose={onClose}>
+    <Panel title={L('Notificaciones', 'Notifications')} onClose={onClose}>
       <div className="tabs" role="tablist">
         <button role="tab" aria-selected={tab === 'mine'} className={`tab ${tab === 'mine' ? 'tab-on' : ''}`} onClick={() => setTab('mine')}>
-          Para ti {unread > 0 && <span className="tab-count">{unread}</span>}
+          {L('Para ti', 'For you')} {unread > 0 && <span className="tab-count">{unread}</span>}
         </button>
         <button role="tab" aria-selected={tab === 'team'} className={`tab ${tab === 'team' ? 'tab-on' : ''}`} onClick={() => setTab('team')}>
-          Actividad del equipo
+          {L('Actividad del equipo', 'Team activity')}
         </button>
       </div>
       {tab === 'mine' ? (
         <ul className="feed-list">
-          {list.length === 0 && <li className="hint">Aquí llegan tus regalos, logros, avisos y reuniones.</li>}
-          {list.map((n) => (
+          {list.length === 0 && <li className="hint">{L('Aquí llegan tus regalos, logros, avisos y reuniones.', 'Your gifts, achievements, announcements and meetings show up here.')}</li>}
+          {list.map((n) => {
+            const text = notificationText(n);
+            return (
             <li key={n.id} className={`feed-item notif ${n.read ? '' : 'notif-new'}`}>
               <button
                 onClick={() => {
@@ -69,22 +73,23 @@ export function NotificationsPanel({ onClose, onOpenAgenda }: { onClose: () => v
               >
                 <span className="feed-icon">{NOTIFICATION_ICON[n.kind]}</span>
                 <span className="feed-text">
-                  <b>{n.title}</b>
-                  {n.body && <span className="notif-body">{n.body}</span>}
+                  <b>{text.title}</b>
+                  {text.body && <span className="notif-body">{text.body}</span>}
                 </span>
                 <small>{timeAgo(n.ts, now)}</small>
               </button>
             </li>
-          ))}
+            );
+          })}
         </ul>
       ) : (
         <ul className="feed-list">
-          {feed.length === 0 && <li className="hint">Aquí aparecen los logros, compras y reconocimientos del equipo.</li>}
+          {feed.length === 0 && <li className="hint">{L('Aquí aparecen los logros, compras y reconocimientos del equipo.', "The team's achievements, purchases and recognitions show up here.")}</li>}
           {feed.slice(0, 60).map((f) => (
             <li key={f.id} className={`feed-item feed-${f.kind}`}>
               <button onClick={() => bridge.emit('camera:focus', f.targetId)}>
                 <span className="feed-icon">{FEED_ICON[f.kind]}</span>
-                <span className="feed-text">{f.text}</span>
+                <span className="feed-text">{feedText(f)}</span>
                 <small>{timeAgo(f.ts, now)}</small>
               </button>
             </li>

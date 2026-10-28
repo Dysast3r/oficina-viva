@@ -25,7 +25,7 @@ Oficina Viva is a small, self-hosted game for real teams. Everyone gets a pixel-
 
 It runs as a single Node process with an embedded SQLite database, so one `docker compose up` is enough to host it for a team.
 
-> **Language note:** the in-game interface is in Spanish, and so are the code comments. The game clock and the live weather follow Santiago, Chile (`America/Santiago`).
+> **Language note:** the game is available in Spanish and English (pick one on the login screen or in your profile). Code comments are in Spanish. The game clock and the live weather follow Santiago, Chile (`America/Santiago`).
 
 ## Contents
 
@@ -80,6 +80,10 @@ Everyone can put coins into a shared fund. Each milestone unlocks a new area, an
 - **Lighting follows the sun:** dawn, golden hour, sunset and night. Rain, snow and storms show up inside the office too.
 - **Office pets:** Bruno (a golden retriever) and Mandarina (an orange cat) wander around, curl up next to people, beg for food at lunch and sleep at night. Click them to pet them.
 - **A daily routine:** people work at their desks, take short walks, have lunch together in the cafeteria and go quiet after hours.
+
+### 🌐 Spanish and English
+- **Switch anytime:** a Español / English toggle on the login screen and in your profile. The choice is saved in the browser; the first visit follows the browser language.
+- **Each person reads in their own language:** the activity feed and notifications are stored as message keys, not finished text, so the same event shows up in Spanish for one teammate and in English for another.
 
 ## Screenshots
 
@@ -168,6 +172,8 @@ src/
     schedule.ts    working hours and time zone
     store.ts       optimistic client store: applies actions instantly, server confirms or rolls back
     social.ts      chat, notifications, presence
+    messages.ts    feed and notification texts, stored as key + params and rendered per language
+  i18n.ts        current language and the inline L('español', 'english') helper
   game/          Phaser 4 scene: isometric rendering, pathfinding, procedural pixel art
   ui/            React 19 HUD and panels
 server/          Express 5 + node:sqlite
@@ -176,6 +182,7 @@ server/          Express 5 + node:sqlite
 - **One set of rules everywhere:** game logic lives in `src/data` and runs on both the client and the server. The UI reacts instantly, and the server stays authoritative.
 - **Live updates** use Server-Sent Events, so every change reaches the whole team immediately.
 - **Auth:** scrypt-hashed passwords, `httpOnly` session cookies, forced password change on first login and rate-limited login attempts.
+- **Translations:** UI strings are written inline as `L('español', 'english')`; catalog entries carry an `en` block. The client sends `X-Lang` so server errors come back in the same language.
 - **Privacy:** notifications and private messages live in their own tables, and each person only receives their own.
 - **Procedural art:** characters, furniture and textures are painted in code at startup. There are no sprite sheets to manage.
 

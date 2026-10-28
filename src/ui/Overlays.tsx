@@ -2,13 +2,21 @@ import { useEffect, useState } from 'react';
 import { bridge } from '../bridge';
 import { COSMETIC_BY_ID, ITEM_BY_ID, ROOMS } from '../data/catalog';
 import { EXPANSIONS } from '../data/layout';
+import { notificationText } from '../data/messages';
 import { ACHIEVEMENTS } from '../data/progress';
 import { isWorkDay } from '../data/schedule';
 import { markNotificationsRead, useNotifications } from '../data/social';
 import { meetingWhen, missionStatus, officeFund, today, useGame } from '../data/store';
 import type { AppNotification, Employee } from '../data/types';
 import { itemIconURL } from '../game/pixel/textures';
+import { L } from '../i18n';
 import { AvatarImg, timeAgo, useNow } from './common';
+
+/** Nombre de lo regalado, en el idioma actual. */
+function giftName(n: AppNotification): string {
+  const id = String(n.data?.itemId ?? '');
+  return ITEM_BY_ID[id]?.name ?? COSMETIC_BY_ID[id]?.name ?? notificationText(n).title;
+}
 
 function GiftIcon({ n }: { n: AppNotification }) {
   const id = String(n.data?.itemId ?? '');
@@ -33,7 +41,7 @@ export function GiftNotice({ onPlace }: { onPlace: () => void }) {
         <div className="gift-burst" aria-hidden="true">
           🎁
         </div>
-        <h3 id="gift-title">{gifts.length === 1 ? '¡Recibiste un regalo!' : `¡Recibiste ${gifts.length} regalos!`}</h3>
+        <h3 id="gift-title">{gifts.length === 1 ? L('¡Recibiste un regalo!', 'You got a gift!') : L(`¡Recibiste ${gifts.length} regalos!`, `You got ${gifts.length} gifts!`)}</h3>
         <ul>
           {gifts.map((n) => {
             const from = employees[String(n.data?.fromId ?? '')];
@@ -41,20 +49,20 @@ export function GiftNotice({ onPlace }: { onPlace: () => void }) {
               <li key={n.id}>
                 <GiftIcon n={n} />
                 <span>
-                  <b>{n.title.replace('¡Recibiste un regalo: ', '').replace(/!$/, '')}</b>
+                  <b>{giftName(n)}</b>
                   <small>
-                    de {from?.name ?? 'Administración'} · {timeAgo(n.ts, now)}
+                    {L('de', 'from')} {from?.name ?? L('Administración', 'Admin')} · {timeAgo(n.ts, now)}
                   </small>
-                  {n.body && <q>{n.body}</q>}
+                  {notificationText(n).body && <q>{notificationText(n).body}</q>}
                 </span>
               </li>
             );
           })}
         </ul>
-        <p className="hint">Las decoraciones quedan en tu bodega y los adornos, en tu vestuario.</p>
+        <p className="hint">{L('Las decoraciones quedan en tu bodega y los adornos, en tu vestuario.', 'Decorations go to your storage and accessories to your wardrobe.')}</p>
         <div className="row-btns">
           <button className="btn" onClick={close}>
-            ¡Gracias!
+            {L('¡Gracias!', 'Thanks!')}
           </button>
           <button
             className="btn btn-primary"
@@ -63,7 +71,7 @@ export function GiftNotice({ onPlace }: { onPlace: () => void }) {
               onPlace();
             }}
           >
-            🛠️ Colocarlo ahora
+            🛠️ {L('Colocarlo ahora', 'Place it now')}
           </button>
         </div>
       </div>
@@ -79,20 +87,21 @@ export function AnnouncementOverlay() {
   const n = pending[0];
   if (n === undefined) return null;
   const by = employees[String(n.data?.byId ?? '')];
+  const text = notificationText(n);
   return (
     <div className="modal-veil">
       <div className="announce-modal" role="alertdialog" aria-labelledby="announce-title">
         <div className="announce-head">
           <span className="announce-icon">📢</span>
           <span>
-            <small>Aviso general{by ? ` de ${by.name}` : ''}</small>
-            <h3 id="announce-title">{n.title}</h3>
+            <small>{by ? L(`Aviso general de ${by.name}`, `Announcement from ${by.name}`) : L('Aviso general', 'Announcement')}</small>
+            <h3 id="announce-title">{text.title}</h3>
           </span>
         </div>
-        {n.body && <p className="announce-body">{n.body}</p>}
+        {text.body && <p className="announce-body">{text.body}</p>}
         <div className="row-btns">
           <button className="btn btn-primary" onClick={() => markNotificationsRead([n.id])}>
-            Entendido {pending.length > 1 ? `(${pending.length - 1} más)` : ''}
+            {L('Entendido', 'Got it')} {pending.length > 1 ? L(`(${pending.length - 1} más)`, `(${pending.length - 1} more)`) : ''}
           </button>
         </div>
       </div>
@@ -114,15 +123,15 @@ export function Celebrations({ meId }: { meId: string }) {
     };
     const offs = [
       bridge.on('fx:levelup', (id, level) => {
-        if (id === meId) push({ kind: 'level', icon: '⭐', title: `¡Nivel ${level}!`, text: 'Se desbloquearon cosas nuevas en la tienda.' });
+        if (id === meId) push({ kind: 'level', icon: '⭐', title: L(`¡Nivel ${level}!`, `Level ${level}!`), text: L('Se desbloquearon cosas nuevas en la tienda.', 'New items unlocked in the shop.') });
       }),
       bridge.on('fx:achievement', (id, achId) => {
         const a = ACHIEVEMENTS.find((x) => x.id === achId);
-        if (id === meId && a) push({ kind: 'achievement', icon: a.icon, title: `Logro: ${a.name}`, text: `${a.desc} · +${a.reward} monedas` });
+        if (id === meId && a) push({ kind: 'achievement', icon: a.icon, title: L(`Logro: ${a.name}`, `Achievement: ${a.name}`), text: L(`${a.desc} · +${a.reward} monedas`, `${a.desc} · +${a.reward} coins`) });
       }),
       bridge.on('fx:expansion', (level) => {
         const x = EXPANSIONS[level - 1];
-        if (x) push({ kind: 'expansion', icon: '🏗️', title: `¡La oficina creció!`, text: `Nueva zona: ${ROOMS[x.room.id].name}. ${x.desc}` });
+        if (x) push({ kind: 'expansion', icon: '🏗️', title: L('¡La oficina creció!', 'The office grew!'), text: L(`Nueva zona: ${ROOMS[x.room.id].name}. ${x.desc}`, `New area: ${ROOMS[x.room.id].name}. ${x.desc}`) });
       }),
     ];
     return () => offs.forEach((o) => o());
@@ -174,7 +183,7 @@ export function WelcomeCard({ me, onMissions, onAgenda, onFund }: { me: Employee
   const pendingMissions = daily.filter((m) => !m.done).length;
   const unread = notifs.filter((n) => !n.read).length;
   const hour = new Date().getHours();
-  const hello = hour < 12 ? 'Buenos días' : hour < 20 ? 'Buenas tardes' : 'Buenas noches';
+  const hello = hour < 12 ? L('Buenos días', 'Good morning') : hour < 20 ? L('Buenas tardes', 'Good afternoon') : L('Buenas noches', 'Good evening');
   const next = EXPANSIONS[fund.level];
   const prevCost = fund.level === 0 ? 0 : EXPANSIONS[fund.level - 1].cost;
   const fundPct = next ? Math.round(((fund.total - prevCost) / (next.cost - prevCost)) * 100) : 100;
@@ -192,15 +201,18 @@ export function WelcomeCard({ me, onMissions, onAgenda, onFund }: { me: Employee
           {isWorkDay(today()) && (
             <li>
               <button onClick={() => (close(), onMissions())}>
-                🎯 {pendingMissions > 0 ? `Tienes ${pendingMissions} misiones nuevas hoy` : 'Misiones del día completas'}
+                🎯{' '}
+                {pendingMissions > 0
+                  ? L(`Tienes ${pendingMissions} misiones nuevas hoy`, `You have ${pendingMissions} new ${pendingMissions === 1 ? 'mission' : 'missions'} today`)
+                  : L('Misiones del día completas', "Today's missions complete")}
               </button>
             </li>
           )}
-          {unread > 0 && <li>🔔 {unread} notificaciones sin leer</li>}
+          {unread > 0 && <li>🔔 {L(`${unread} notificaciones sin leer`, `${unread} unread ${unread === 1 ? 'notification' : 'notifications'}`)}</li>}
           {meeting && (
             <li>
               <button onClick={() => (close(), onAgenda())}>
-                🗓️ {meeting.status === 'active' ? 'Reunión en curso' : 'Próxima reunión'}: {meeting.title}
+                🗓️ {meeting.status === 'active' ? L('Reunión en curso', 'Meeting in progress') : L('Próxima reunión', 'Next meeting')}: {meeting.title}
                 {meeting.status === 'scheduled' ? ` · ${meetingWhen(meeting.start)}` : ''}
               </button>
             </li>
@@ -208,13 +220,13 @@ export function WelcomeCard({ me, onMissions, onAgenda, onFund }: { me: Employee
           {next && (
             <li>
               <button onClick={() => (close(), onFund())}>
-                🏗️ Fondo de ampliación: {fundPct}% para {ROOMS[next.room.id].name}
+                🏗️ {L(`Fondo de ampliación: ${fundPct}% para ${ROOMS[next.room.id].name}`, `Expansion fund: ${fundPct}% toward ${ROOMS[next.room.id].name}`)}
               </button>
             </li>
           )}
         </ul>
         <button className="btn btn-primary btn-block" onClick={close}>
-          ¡A trabajar!
+          {L('¡A trabajar!', "Let's get to work!")}
         </button>
       </div>
     </div>

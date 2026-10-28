@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import { bridge } from './bridge';
 import { startWeather } from './data/sky';
+import { notificationText } from './data/messages';
 import { onNotification, onPrivateMessage, unreadDms, useChat } from './data/social';
 import { logout, missionStatus, onSyncError, useGame, useSession } from './data/store';
 import { PhaserGame } from './game/PhaserGame';
+import { L } from './i18n';
 import { NOTIFICATION_ICON, NotificationsPanel } from './ui/ActivityFeed';
 import { AdminPanel } from './ui/AdminPanel';
 import { AgendaPanel } from './ui/AgendaPanel';
@@ -52,7 +54,8 @@ export function App() {
     () =>
       onNotification((n) => {
         if (n.kind === 'gift' || n.kind === 'announcement' || n.kind === 'achievement' || n.kind === 'levelup') return;
-        richToast(NOTIFICATION_ICON[n.kind], n.title, n.body ?? '', TONE[n.kind] ?? 'blue');
+        const text = notificationText(n);
+        richToast(NOTIFICATION_ICON[n.kind], text.title, text.body ?? '', TONE[n.kind] ?? 'blue');
       }),
     [],
   );
@@ -62,7 +65,7 @@ export function App() {
     () =>
       onPrivateMessage((m) => {
         const from = employees[m.from];
-        richToast('💬', from ? `${from.name.split(' ')[0]} te escribió` : 'Mensaje nuevo', m.text, 'blue');
+        richToast('💬', from ? L(`${from.name.split(' ')[0]} te escribió`, `${from.name.split(' ')[0]} sent you a message`) : L('Mensaje nuevo', 'New message'), m.text, 'blue');
       }),
     [employees],
   );
@@ -111,7 +114,7 @@ export function App() {
     {
       id: 'office',
       icon: 'home',
-      label: 'Oficina',
+      label: L('Oficina', 'Office'),
       active: open === null && !decorating,
       onClick: () => {
         setOpen(null);
@@ -119,19 +122,19 @@ export function App() {
         bridge.emit('camera:focus', me.id);
       },
     },
-    { id: 'shop', icon: 'cart', label: 'Tienda', active: open?.kind === 'shop', onClick: () => toggle('shop') },
-    { id: 'decor', icon: 'hammer', label: decorating ? 'Terminar' : 'Decorar', active: decorating, onClick: startDecor },
-    { id: 'missions', icon: 'target', label: 'Misiones', active: open?.kind === 'missions', badge: missionsLeft, onClick: () => toggle('missions') },
+    { id: 'shop', icon: 'cart', label: L('Tienda', 'Shop'), active: open?.kind === 'shop', onClick: () => toggle('shop') },
+    { id: 'decor', icon: 'hammer', label: decorating ? L('Terminar', 'Finish') : L('Decorar', 'Decorate'), active: decorating, onClick: startDecor },
+    { id: 'missions', icon: 'target', label: L('Misiones', 'Missions'), active: open?.kind === 'missions', badge: missionsLeft, onClick: () => toggle('missions') },
     { id: 'chat', icon: 'chat', label: 'Chat', active: open?.kind === 'chat', badge: chatUnread, onClick: () => toggle('chat') },
-    { id: 'agenda', icon: 'calendar', label: 'Agenda', active: open?.kind === 'agenda', onClick: () => toggle('agenda') },
-    { id: 'ranking', icon: 'users', label: 'Equipo', active: open?.kind === 'ranking' || open?.kind === 'kudos', onClick: () => toggle('ranking') },
-    { id: 'fund', icon: 'build', label: 'Ampliar', active: open?.kind === 'fund', onClick: () => toggle('fund') },
+    { id: 'agenda', icon: 'calendar', label: L('Agenda', 'Schedule'), active: open?.kind === 'agenda', onClick: () => toggle('agenda') },
+    { id: 'ranking', icon: 'users', label: L('Equipo', 'Team'), active: open?.kind === 'ranking' || open?.kind === 'kudos', onClick: () => toggle('ranking') },
+    { id: 'fund', icon: 'build', label: L('Ampliar', 'Expand'), active: open?.kind === 'fund', onClick: () => toggle('fund') },
     ...(boss
-      ? [{ id: 'award', icon: 'medal' as const, label: 'Desempeño', active: open?.kind === 'award', onClick: () => toggle('award') }]
+      ? [{ id: 'award', icon: 'medal' as const, label: L('Desempeño', 'Performance'), active: open?.kind === 'award', onClick: () => toggle('award') }]
       : []),
     me.role === 'admin'
-      ? { id: 'admin', icon: 'gear', label: 'Ajustes', active: open?.kind === 'admin', onClick: () => toggle('admin') }
-      : { id: 'logout', icon: 'swap', label: 'Salir', onClick: logout },
+      ? { id: 'admin', icon: 'gear', label: L('Ajustes', 'Settings'), active: open?.kind === 'admin', onClick: () => toggle('admin') }
+      : { id: 'logout', icon: 'swap', label: L('Salir', 'Log out'), onClick: logout },
   ];
 
   return (
@@ -140,10 +143,10 @@ export function App() {
       <div className="vignette" />
       {connection === 'offline' && (
         <div className="net-badge" role="status">
-          Sin conexión · reintentando…
+          {L('Sin conexión · reintentando…', 'Offline · retrying…')}
         </div>
       )}
-      <SafeBoundary label="la interfaz">
+      <SafeBoundary label={L('la interfaz', 'the interface')}>
       <ClockCard me={me} onProfile={() => setOpen({ kind: 'profile', target: me.id })} />
       {/* Junto al reloj: los paneles se abren a la derecha y no la tapan. */}
       <div className="hud-tools">

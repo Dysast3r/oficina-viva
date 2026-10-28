@@ -18,14 +18,15 @@ import { buyCosmetic, buyFloor, buyItem, giftItem, hasAllDecor, updateAvatar, us
 import type { Employee } from '../data/types';
 import { floorIconURL, itemIconURL } from '../game/pixel/textures';
 import { AvatarImg, Coin, Panel, report } from './common';
+import { L, intlLocale } from '../i18n';
 
 type Tab = ItemCategory | 'pisos' | 'vestuario';
 const TABS: Tab[] = ['legendario', 'premium', 'vestuario', 'muebles', 'plantas', 'tecnologia', 'deco', 'pisos'];
 
 function tabLabel(t: Tab): string {
-  if (t === 'pisos') return 'Pisos';
-  if (t === 'vestuario') return '🎩 Vestuario';
-  if (t === 'legendario') return '✨ Legendario';
+  if (t === 'pisos') return L('Pisos', 'Floors');
+  if (t === 'vestuario') return L('🎩 Vestuario', '🎩 Wardrobe');
+  if (t === 'legendario') return L('✨ Legendario', '✨ Legendary');
   return CATEGORY_LABEL[t];
 }
 
@@ -55,8 +56,8 @@ function GiftForm({ me, itemId, onClose }: { me: Employee; itemId: string; onClo
         target && cosmetic && <AvatarImg avatar={{ ...target.avatar, [cosmetic.slot]: cosmetic.id }} size={2.2} />
       )}
       <div>
-        <h4>🎁 Regalar {item?.name ?? cosmetic?.name}</h4>
-        <select className="input" value={to} onChange={(e) => setTo(e.target.value)} aria-label="Para">
+        <h4>🎁 {L('Regalar', 'Give')} {item?.name ?? cosmetic?.name}</h4>
+        <select className="input" value={to} onChange={(e) => setTo(e.target.value)} aria-label={L('Para', 'To')}>
           {DEPTS.map((d) => (
             <optgroup key={d} label={ROOMS[d].name}>
               {others
@@ -71,14 +72,14 @@ function GiftForm({ me, itemId, onClose }: { me: Employee; itemId: string; onClo
         </select>
         <input
           className="input"
-          placeholder="Mensaje (opcional): ¡Felicitaciones por el cierre!"
+          placeholder={L('Mensaje (opcional): ¡Felicitaciones por el cierre!', 'Message (optional): Congrats on closing the deal!')}
           maxLength={140}
           value={message}
           onChange={(e) => setMessage(e.target.value)}
         />
         <div className="row-btns">
           <button className="btn" onClick={onClose}>
-            Cancelar
+            {L('Cancelar', 'Cancel')}
           </button>
           <button
             className="btn btn-primary"
@@ -87,7 +88,7 @@ function GiftForm({ me, itemId, onClose }: { me: Employee; itemId: string; onClo
               if (report(giftItem(to, itemId, message))) onClose();
             }}
           >
-            Enviar regalo
+            {L('Enviar regalo', 'Send gift')}
           </button>
         </div>
       </div>
@@ -111,17 +112,17 @@ export function ShopPanel({ me, onClose, onDecorate }: { me: Employee; onClose: 
   const cardClass = (id: string, extra = '') => `card ${extra} ${bought === id ? 'card-bought' : ''}`;
 
   return (
-    <Panel title="Tienda" onClose={onClose} wide>
+    <Panel title={L('Tienda', 'Shop')} onClose={onClose} wide>
       <div className="shop-wallet">
         {free ? (
-          <span>🛡️ Administración: todo gratis y puedes regalarlo.</span>
+          <span>{L('🛡️ Administración: todo gratis y puedes regalarlo.', '🛡️ Admin: everything is free and you can give it as a gift.')}</span>
         ) : (
           <span>
-            Tienes <Coin /> <b>{me.coins.toLocaleString('es-CL')}</b> · Nivel {level}
+            {L('Tienes', 'You have')} <Coin /> <b>{me.coins.toLocaleString(intlLocale())}</b> · {L('Nivel', 'Level')} {level}
           </span>
         )}
         <button className="btn btn-small" onClick={onDecorate}>
-          🛠️ Ir a decorar
+          🛠️ {L('Ir a decorar', 'Go decorate')}
         </button>
       </div>
       {gifting && <GiftForm me={me} itemId={gifting} onClose={() => setGifting(null)} />}
@@ -140,9 +141,21 @@ export function ShopPanel({ me, onClose, onDecorate }: { me: Employee; onClose: 
       </div>
 
       {tab === 'legendario' && (
-        <p className="legend-intro">Objetos únicos para los que más brillan. Tienen luces y destellos propios y suman muchísimo estilo a tu puesto.</p>
+        <p className="legend-intro">
+          {L(
+            'Objetos únicos para los que más brillan. Tienen luces y destellos propios y suman muchísimo estilo a tu puesto.',
+            'Unique items for those who shine brightest. They have their own lights and sparkles and add a ton of style to your desk.',
+          )}
+        </p>
       )}
-      {tab === 'vestuario' && <p className="legend-intro">Adornos para tu personaje: se ven en la oficina, en el chat y en tu perfil. Al comprarlos te los pones al tiro.</p>}
+      {tab === 'vestuario' && (
+        <p className="legend-intro">
+          {L(
+            'Adornos para tu personaje: se ven en la oficina, en el chat y en tu perfil. Al comprarlos te los pones al tiro.',
+            "Accessories for your character: they show in the office, in chat and on your profile. You put them on as soon as you buy them.",
+          )}
+        </p>
+      )}
 
       <div className="shop-grid">
         {tab === 'vestuario' &&
@@ -168,22 +181,22 @@ export function ShopPanel({ me, onClose, onDecorate }: { me: Employee; onClose: 
                       setBought(c.id);
                     }}
                   >
-                    {wearing ? 'Puesto' : 'Ponérmelo'}
+                    {wearing ? L('Puesto', 'Wearing') : L('Ponérmelo', 'Put it on')}
                   </button>
                 ) : free ? (
                   <div className="card-actions">
                     <button className="btn btn-small btn-buy" onClick={() => buy(c.id, () => buyCosmetic(c.id))}>
-                      Obtener
+                      {L('Obtener', 'Get')}
                     </button>
                     <button className="btn btn-small" onClick={() => setGifting(c.id)}>
-                      🎁 Regalar
+                      🎁 {L('Regalar', 'Give')}
                     </button>
                   </div>
                 ) : locked ? (
-                  <span className="lock">🔒 Nivel {c.level}</span>
+                  <span className="lock">🔒 {L('Nivel', 'Level')} {c.level}</span>
                 ) : (
                   <button className="btn btn-small btn-buy" disabled={me.coins < c.price} onClick={() => buy(c.id, () => buyCosmetic(c.id))}>
-                    <Coin /> {c.price.toLocaleString('es-CL')}
+                    <Coin /> {c.price.toLocaleString(intlLocale())}
                   </button>
                 )}
               </article>
@@ -200,17 +213,17 @@ export function ShopPanel({ me, onClose, onDecorate }: { me: Employee; onClose: 
                   <img className="pixel" src={floorIconURL(f)} width={128} height={64} alt="" />
                 </div>
                 <h3>{f.name}</h3>
-                <p className="card-meta">✨ +{f.style} estilo</p>
+                <p className="card-meta">✨ +{f.style} {L('estilo', 'style')}</p>
                 {owned ? (
                   <button className="btn btn-small" disabled={me.floor === f.id} onClick={() => report(buyFloor(f.id))}>
-                    {me.floor === f.id ? 'Instalado' : 'Usar'}
+                    {me.floor === f.id ? L('Instalado', 'Installed') : L('Usar', 'Use')}
                   </button>
                 ) : locked ? (
-                  <span className="lock">🔒 Nivel {f.level}</span>
+                  <span className="lock">🔒 {L('Nivel', 'Level')} {f.level}</span>
                 ) : (
                   <button className="btn btn-small btn-buy" disabled={!free && me.coins < f.price} onClick={() => buy(f.id, () => buyFloor(f.id))}>
                     {free ? (
-                      'Obtener'
+                      L('Obtener', 'Get')
                     ) : (
                       <>
                         <Coin /> {f.price}
@@ -239,27 +252,28 @@ export function ShopPanel({ me, onClose, onDecorate }: { me: Employee; onClose: 
                 <h3>{i.name}</h3>
                 <p className="card-desc">{i.desc}</p>
                 <p className="card-meta">
-                  ✨ +{i.style} estilo{stock + placed > 0 ? ` · tienes ${stock + placed}` : ''}
+                  ✨ +{i.style} {L('estilo', 'style')}
+                  {stock + placed > 0 ? L(` · tienes ${stock + placed}`, ` · you have ${stock + placed}`) : ''}
                 </p>
                 {!free && !locked && me.coins < i.price && (
-                  <div className="save-track" title={`Llevas ${me.coins} de ${i.price}`}>
+                  <div className="save-track" title={L(`Llevas ${me.coins} de ${i.price}`, `You have ${me.coins} of ${i.price}`)}>
                     <div className="save-fill" style={{ width: `${progress}%` }} />
                   </div>
                 )}
                 {free ? (
                   <div className="card-actions">
                     <button className="btn btn-small btn-buy" onClick={() => buy(i.id, () => buyItem(i.id))}>
-                      Obtener
+                      {L('Obtener', 'Get')}
                     </button>
                     <button className="btn btn-small" onClick={() => setGifting(i.id)}>
-                      🎁 Regalar
+                      🎁 {L('Regalar', 'Give')}
                     </button>
                   </div>
                 ) : locked ? (
-                  <span className="lock">🔒 Nivel {i.level}</span>
+                  <span className="lock">🔒 {L('Nivel', 'Level')} {i.level}</span>
                 ) : (
                   <button className="btn btn-small btn-buy" disabled={me.coins < i.price} onClick={() => buy(i.id, () => buyItem(i.id))}>
-                    <Coin /> {i.price.toLocaleString('es-CL')}
+                    <Coin /> {i.price.toLocaleString(intlLocale())}
                   </button>
                 )}
               </article>

@@ -12,10 +12,12 @@ import {
   levelForXp,
   type CosmeticSlot,
 } from '../data/catalog';
+import { feedText } from '../data/messages';
 import { ACHIEVEMENTS } from '../data/progress';
 import { canAward, currentUser, hasAllDecor, officeScore, updateAvatar, useGame, useSession } from '../data/store';
 import type { Avatar } from '../data/types';
-import { AvatarImg, Coins, DeptTag, LevelBar, Panel, levelTitle, timeAgo, toast, useNow } from './common';
+import { L } from '../i18n';
+import { AvatarImg, Coins, DeptTag, LangSwitch, LevelBar, Panel, levelTitle, timeAgo, toast, useNow } from './common';
 import { NewPasswordForm } from './LoginScreen';
 
 export function ProfilePanel({
@@ -49,7 +51,7 @@ export function ProfilePanel({
     .slice(0, 6);
 
   return (
-    <Panel title={isMe ? 'Mi perfil' : 'Perfil'} onClose={onClose}>
+    <Panel title={isMe ? L('Mi perfil', 'My profile') : L('Perfil', 'Profile')} onClose={onClose}>
       <div className="profile-head">
         <div className="profile-avatar">
           <AvatarImg avatar={e.avatar} size={4} />
@@ -65,33 +67,33 @@ export function ProfilePanel({
       <div className="stats">
         <div>
           <Coins value={e.coins} />
-          <small>monedas</small>
+          <small>{L('monedas', 'coins')}</small>
         </div>
         <div>
           <b>✨ {officeScore(e)}</b>
-          <small>estilo del puesto</small>
+          <small>{L('estilo del puesto', 'desk style')}</small>
         </div>
         <div>
           <b>🔥 {e.streak}</b>
-          <small>días de racha</small>
+          <small>{L('días de racha', 'day streak')}</small>
         </div>
       </div>
 
       {isMe ? (
         <button className="btn btn-block" onClick={() => setEditing((v) => !v)}>
-          {editing ? 'Listo' : '🎨 Personalizar mi personaje'}
+          {editing ? L('Listo', 'Done') : L('🎨 Personalizar mi personaje', '🎨 Customize my character')}
         </button>
       ) : (
         <div className="row-btns">
           <button className="btn" onClick={() => onKudos(e.id)}>
-            💖 Reconocer
+            💖 {L('Reconocer', 'Recognize')}
           </button>
           <button className="btn" onClick={() => onMessage(e.id)}>
-            💬 Mensaje
+            💬 {L('Mensaje', 'Message')}
           </button>
           {me && canAward(me, e) && (
             <button className="btn btn-primary" onClick={() => onAward(e.id)}>
-              🏅 Registrar logro
+              🏅 {L('Registrar logro', 'Log achievement')}
             </button>
           )}
         </div>
@@ -101,7 +103,7 @@ export function ProfilePanel({
 
       {(e.achievements?.length ?? 0) > 0 && (
         <>
-          <h4 className="section">Logros</h4>
+          <h4 className="section">{L('Logros', 'Achievements')}</h4>
           <div className="badge-row">
             {ACHIEVEMENTS.filter((a) => e.achievements?.includes(a.id)).map((a) => (
               <span key={a.id} className="ach-badge" title={`${a.name}: ${a.desc}`}>
@@ -115,40 +117,46 @@ export function ProfilePanel({
       {isMe && user && (
         <>
           <button className="btn btn-block" style={{ marginTop: 6 }} onClick={() => setChangingPw((v) => !v)}>
-            {changingPw ? 'Cancelar' : '🔒 Cambiar contraseña'}
+            {changingPw ? L('Cancelar', 'Cancel') : L('🔒 Cambiar contraseña', '🔒 Change password')}
           </button>
           {changingPw && (
             <NewPasswordForm
               username={user.username}
               onDone={() => {
                 setChangingPw(false);
-                toast('Contraseña actualizada.');
+                toast(L('Contraseña actualizada.', 'Password updated.'));
               }}
             />
           )}
+          <div className="swatch-row">
+            <span className="field-label">{L('Idioma', 'Language')}</span>
+            <LangSwitch />
+          </div>
         </>
       )}
 
       {topItems.length > 0 && (
         <>
-          <h4 className="section">Lo mejor de su puesto</h4>
+          <h4 className="section">{L('Lo mejor de su puesto', 'Desk highlights')}</h4>
           <p className="hint">{topItems.map((d) => d.name).join(' · ')}</p>
         </>
       )}
 
-      <h4 className="section">Últimos logros</h4>
+      <h4 className="section">{L('Últimos logros', 'Recent activity')}</h4>
       {mine.length === 0 ? (
-        <p className="hint">Todavía nada por aquí.</p>
+        <p className="hint">{L('Todavía nada por aquí.', 'Nothing here yet.')}</p>
       ) : (
         <ul className="mini-feed">
           {mine.map((f) => (
             <li key={f.id}>
-              {f.text} <small>{timeAgo(f.ts, now)}</small>
+              {feedText(f)} <small>{timeAgo(f.ts, now)}</small>
             </li>
           ))}
         </ul>
       )}
-      <p className="hint">Nivel {levelForXp(e.xp)} · {e.xp} XP</p>
+      <p className="hint">
+        {L('Nivel', 'Level')} {levelForXp(e.xp)} · {e.xp} XP
+      </p>
     </Panel>
   );
 }
@@ -182,7 +190,7 @@ function WardrobeRow({ slot, avatar, owned, set }: { slot: CosmeticSlot; avatar:
       <span className="field-label">{SLOT_LABEL[slot]}</span>
       <div className="seg">
         <button className={`seg-btn ${current === undefined ? 'seg-on' : ''}`} onClick={() => set({ [slot]: undefined })}>
-          Nada
+          {L('Nada', 'None')}
         </button>
         {list.map((c) => (
           <button key={c.id} className={`seg-btn ${current === c.id ? 'seg-on' : ''}`} onClick={() => set({ [slot]: c.id })}>
@@ -221,9 +229,9 @@ export function AvatarEditor({
         </div>
       )}
       <div className="swatch-row">
-        <span className="field-label">Cuerpo</span>
+        <span className="field-label">{L('Cuerpo', 'Body')}</span>
         <div className="seg">
-          {(['Hombre', 'Mujer'] as const).map((n, i) => (
+          {L(['Hombre', 'Mujer'], ['Man', 'Woman']).map((n, i) => (
             <button key={n} className={`seg-btn ${avatar.body === i ? 'seg-on' : ''}`} onClick={() => set({ body: i as 0 | 1 })}>
               {n}
             </button>
@@ -231,7 +239,7 @@ export function AvatarEditor({
         </div>
       </div>
       <div className="swatch-row">
-        <span className="field-label">Peinado</span>
+        <span className="field-label">{L('Peinado', 'Hairstyle')}</span>
         <div className="seg">
           {HAIR_STYLES.map((n, i) => (
             <button key={n} className={`seg-btn ${avatar.hairStyle === i ? 'seg-on' : ''}`} onClick={() => set({ hairStyle: i })}>
@@ -241,7 +249,7 @@ export function AvatarEditor({
         </div>
       </div>
       <div className="swatch-row">
-        <span className="field-label">Accesorios</span>
+        <span className="field-label">{L('Accesorios', 'Accessories')}</span>
         <div className="seg">
           {ACCESSORIES.map((n, i) => (
             <button key={n} className={`seg-btn ${(avatar.acc ?? 0) === i ? 'seg-on' : ''}`} onClick={() => set({ acc: i })}>
@@ -250,14 +258,14 @@ export function AvatarEditor({
           ))}
         </div>
       </div>
-      <Swatches label="Piel" colors={AVATAR_SKIN} value={avatar.skin} onPick={(i) => set({ skin: i })} />
-      <Swatches label="Pelo" colors={AVATAR_HAIR} value={avatar.hair} onPick={(i) => set({ hair: i })} />
-      <Swatches label="Chaqueta" colors={AVATAR_SHIRT} value={avatar.shirt} onPick={(i) => set({ shirt: i })} />
-      <Swatches label="Pantalón" colors={AVATAR_PANTS} value={avatar.pants} onPick={(i) => set({ pants: i })} />
+      <Swatches label={L('Piel', 'Skin')} colors={AVATAR_SKIN} value={avatar.skin} onPick={(i) => set({ skin: i })} />
+      <Swatches label={L('Pelo', 'Hair')} colors={AVATAR_HAIR} value={avatar.hair} onPick={(i) => set({ hair: i })} />
+      <Swatches label={L('Chaqueta', 'Jacket')} colors={AVATAR_SHIRT} value={avatar.shirt} onPick={(i) => set({ shirt: i })} />
+      <Swatches label={L('Pantalón', 'Pants')} colors={AVATAR_PANTS} value={avatar.pants} onPick={(i) => set({ pants: i })} />
       {(['hat', 'face', 'neck'] as const).map((slot) => (
         <WardrobeRow key={slot} slot={slot} avatar={avatar} owned={owned} set={set} />
       ))}
-      {owned !== 'all' && owned.length === 0 && <p className="hint">🎩 Compra sombreros, barbas, lentes y más en la tienda (pestaña Vestuario).</p>}
+      {owned !== 'all' && owned.length === 0 && <p className="hint">{L('🎩 Compra sombreros, barbas, lentes y más en la tienda (pestaña Vestuario).', '🎩 Buy hats, beards, glasses and more in the shop (Wardrobe tab).')}</p>}
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from 'react';
 import { bridge } from '../bridge';
+import { L, lang } from '../i18n';
 import { api, getState, onServerEvent, onSessionChange, type Result } from './store';
 import type { AppNotification, ChatMessage } from './types';
 
@@ -142,7 +143,7 @@ onServerEvent<ChatMessage>('dm', (m) => {
 export async function openConversation(other: string): Promise<void> {
   const s = chat.get();
   if (s.dms[other] === undefined) {
-    const res = await fetch(`/api/chat/dm/${encodeURIComponent(other)}`, { credentials: 'same-origin' });
+    const res = await fetch(`/api/chat/dm/${encodeURIComponent(other)}`, { credentials: 'same-origin', headers: { 'X-Lang': lang() } });
     const list = res.ok ? ((await res.json()) as ChatMessage[]) : [];
     const cur = chat.get();
     chat.set({ ...cur, dms: { ...cur.dms, [other]: list } });
@@ -156,9 +157,9 @@ export async function openConversation(other: string): Promise<void> {
 
 export async function sendChat(text: string, to?: string): Promise<Result> {
   const clean = text.trim();
-  if (!clean) return { ok: false, message: 'Escribe algo primero.' };
+  if (!clean) return { ok: false, message: L('Escribe algo primero.', 'Write something first.') };
   const r = await api('chat', { text: clean.slice(0, 300), ...(to ? { to } : {}) });
-  return r.ok ? { ok: true, message: '' } : { ok: false, message: r.message || 'No se pudo enviar.' };
+  return r.ok ? { ok: true, message: '' } : { ok: false, message: r.message || L('No se pudo enviar.', "Couldn't send it.") };
 }
 
 export function unreadDms(s: ChatState): number {

@@ -3,6 +3,7 @@ import { AWARDS } from '../data/catalog';
 import { award, canAward, useGame } from '../data/store';
 import type { Employee } from '../data/types';
 import { AvatarImg, Coin, Panel, report } from './common';
+import { L } from '../i18n';
 
 /** Registro de desempeño: solo jefatura (su área) y administración (todos). */
 export function AwardPanel({ me, onClose, preselect }: { me: Employee; onClose: () => void; preselect?: string }) {
@@ -15,8 +16,8 @@ export function AwardPanel({ me, onClose, preselect }: { me: Employee; onClose: 
 
   if (team.length === 0) {
     return (
-      <Panel title="Registrar desempeño" onClose={onClose}>
-        <p className="hint">No tienes personas a cargo para registrar desempeño.</p>
+      <Panel title={L('Registrar desempeño', 'Log performance')} onClose={onClose}>
+        <p className="hint">{L('No tienes personas a cargo para registrar desempeño.', "You don't have anyone on your team to log performance for.")}</p>
       </Panel>
     );
   }
@@ -26,9 +27,14 @@ export function AwardPanel({ me, onClose, preselect }: { me: Employee; onClose: 
   };
 
   return (
-    <Panel title="Registrar desempeño" onClose={onClose}>
-      <p className="hint">Cada logro registrado le da monedas a la persona, que las usa para mejorar su puesto.</p>
-      <label className="field-label">¿Quién?</label>
+    <Panel title={L('Registrar desempeño', 'Log performance')} onClose={onClose}>
+      <p className="hint">
+        {L(
+          'Cada logro registrado le da monedas a la persona, que las usa para mejorar su puesto.',
+          'Each logged achievement gives the person coins, which they use to upgrade their desk.',
+        )}
+      </p>
+      <label className="field-label">{L('¿Quién?', 'Who?')}</label>
       <div className="who-grid">
         {team.map((e) => (
           <button key={e.id} className={`who ${target === e.id ? 'who-on' : ''}`} onClick={() => setTarget(e.id)} title={e.title}>
@@ -38,7 +44,7 @@ export function AwardPanel({ me, onClose, preselect }: { me: Employee; onClose: 
         ))}
       </div>
 
-      <label className="field-label">¿Qué logró?</label>
+      <label className="field-label">{L('¿Qué logró?', 'What did they achieve?')}</label>
       <div className="award-list">
         {AWARDS.map((a) => (
           <button key={a.id} className={`award ${awardId === a.id ? 'award-on' : ''}`} onClick={() => setAwardId(a.id)}>
@@ -51,7 +57,7 @@ export function AwardPanel({ me, onClose, preselect }: { me: Employee; onClose: 
         ))}
         <button className={`award ${awardId === 'custom' ? 'award-on' : ''}`} onClick={() => setAwardId('custom')}>
           <span className="award-icon">⭐</span>
-          <span className="award-label">Reconocimiento especial</span>
+          <span className="award-label">{L('Reconocimiento especial', 'Special recognition')}</span>
           {awardId === 'custom' ? (
             <input
               className="input input-num"
@@ -63,24 +69,24 @@ export function AwardPanel({ me, onClose, preselect }: { me: Employee; onClose: 
               onChange={(ev) => setCustom(Number(ev.target.value))}
             />
           ) : (
-            <span className="award-coins">a elección</span>
+            <span className="award-coins">{L('a elección', 'your choice')}</span>
           )}
         </button>
       </div>
 
       <label className="field-label" htmlFor="award-note">
-        Comentario (aparece en la actividad)
+        {L('Comentario (aparece en la actividad)', 'Comment (shows in the activity feed)')}
       </label>
       <input
         id="award-note"
         className="input"
         maxLength={90}
-        placeholder="Ej: cerró el contrato con cliente nuevo"
+        placeholder={L('Ej: cerró el contrato con cliente nuevo', 'E.g. closed the contract with a new client')}
         value={note}
         onChange={(ev) => setNote(ev.target.value)}
       />
       <button className="btn btn-primary btn-block" onClick={submit}>
-        Entregar monedas
+        {L('Entregar monedas', 'Give coins')}
       </button>
     </Panel>
   );

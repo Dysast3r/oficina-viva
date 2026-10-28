@@ -1,4 +1,4 @@
-﻿import {
+import {
   AWARDS,
   CHECKIN_COINS,
   COSMETIC_BY_ID,
@@ -42,6 +42,8 @@ import {
   type Counter,
   type MissionDef,
 } from './progress';
+import { L } from '../i18n';
+import { meetingWhen, msg, spanishText, type Msg } from './messages';
 import { TIME_ZONE, checkInBlockedReason, isWorkDay, officeClock, previousWorkDay, shiftOn } from './schedule';
 import { makeEmployee, newUid } from './seed';
 import type {
@@ -138,7 +140,7 @@ export const NO_DECOR_ROOMS: readonly string[] = ['gerencia'];
  */
 export function placeProblem(s: GameState, e: Employee, itemId: string, x: number, y: number, rot: Rot, ignoreUid?: string): string | null {
   const def = ITEM_BY_ID[itemId];
-  if (def === undefined) return 'Objeto desconocido.';
+  if (def === undefined) return L('Objeto desconocido.', 'Unknown item.');
   // Las salas construidas dependen del fondo; así cliente y servidor ven las mismas.
   setBuiltLevel(officeFund(s).level);
   const own = plotRect(e.dept, e.plot);
@@ -150,25 +152,25 @@ export function placeProblem(s: GameState, e: Employee, itemId: string, x: numbe
   const outside = tiles.filter((t) => !inRect(own, t.x, t.y));
   for (const t of tiles) {
     const room = roomAt(t.x, t.y);
-    if (room === null) return 'Ahí no hay oficina.';
+    if (room === null) return L('Ahí no hay oficina.', "There's no office there.");
     rooms.add(room.id);
   }
-  if (rooms.size > 1) return 'Tiene que quedar dentro de una sola sala.';
+  if (rooms.size > 1) return L('Tiene que quedar dentro de una sola sala.', 'It has to fit inside a single room.');
   for (const t of outside) {
     const room = roomAt(t.x, t.y);
-    if (room !== null && NO_DECOR_ROOMS.includes(room.id)) return `En ${ROOMS[room.id].name} no se pueden poner adornos.`;
+    if (room !== null && NO_DECOR_ROOMS.includes(room.id)) return L(`En ${ROOMS[room.id].name} no se pueden poner adornos.`, `You can't decorate in ${ROOMS[room.id].name}.`);
     if (Object.values(PLOTS).some((list) => list.some((p) => inRect(p, t.x, t.y)))) {
       const owner = Object.values(s.employees).find((o) => inRect(plotRect(o.dept, o.plot), t.x, t.y));
-      return owner ? `Ese es el puesto de ${firstName(owner)}.` : 'Ese espacio es un puesto de trabajo.';
+      return owner ? L(`Ese es el puesto de ${firstName(owner)}.`, `That's ${firstName(owner)}'s desk.`) : L('Ese espacio es un puesto de trabajo.', 'That space is a workstation.');
     }
-    if (!def.flat && isDoorTile(t.x, t.y)) return 'Taparía una puerta.';
+    if (!def.flat && isDoorTile(t.x, t.y)) return L('Taparía una puerta.', 'It would block a door.');
   }
 
   const hit = (g: Rect) => f.x < g.x + g.w && g.x < f.x + f.w && f.y < g.y + g.h && g.y < f.y + f.d;
   for (const st of activeStaticItems()) {
     if (Boolean(ITEM_BY_ID[st.itemId]?.flat) !== Boolean(def.flat)) continue;
     const g = footprint(st.itemId, st.x, st.y, st.rot);
-    if (hit({ x: g.x, y: g.y, w: g.w, h: g.d })) return 'Choca con otro mueble.';
+    if (hit({ x: g.x, y: g.y, w: g.w, h: g.d })) return L('Choca con otro mueble.', 'It overlaps another piece of furniture.');
   }
   for (const o of Object.values(s.employees)) {
     const r = plotRect(o.dept, o.plot);
@@ -177,10 +179,10 @@ export function placeProblem(s: GameState, e: Employee, itemId: string, x: numbe
       // Lo plano (alfombras) solo choca con lo plano; los muebles con muebles.
       if (Boolean(ITEM_BY_ID[p.itemId]?.flat) !== Boolean(def.flat)) continue;
       const g = footprint(p.itemId, r.x + p.x, r.y + p.y, p.rot);
-      if (hit({ x: g.x, y: g.y, w: g.w, h: g.d })) return o.id === e.id ? 'Choca con otro de tus objetos.' : `Choca con un objeto de ${firstName(o)}.`;
+      if (hit({ x: g.x, y: g.y, w: g.w, h: g.d })) return o.id === e.id ? L('Choca con otro de tus objetos.', 'It overlaps another of your items.') : L(`Choca con un objeto de ${firstName(o)}.`, `It overlaps one of ${firstName(o)}'s items.`);
     }
   }
-  if (!def.flat && outside.length > 0 && blocksTheWay(s, tiles, ignoreUid)) return 'Cortaría el paso.';
+  if (!def.flat && outside.length > 0 && blocksTheWay(s, tiles, ignoreUid)) return L('Cortaría el paso.', 'It would block the way.');
   return null;
 }
 
@@ -331,8 +333,8 @@ export type Fx =
 export interface NotifyReq {
   to: string[] | 'all';
   kind: NotificationKind;
-  title: string;
-  body?: string;
+  title: Msg;
+  body?: Msg;
   data?: Record<string, string | number>;
 }
 
@@ -368,8 +370,8 @@ export interface Outcome {
   notify: NotifyReq[];
 }
 
-function event(kind: ActivityKind, targetId: string, text: string, extra: Partial<ActivityEvent> = {}): ActivityEvent {
-  return { id: newUid('a'), ts: Date.now(), kind, targetId, text, ...extra };
+function event(kind: ActivityKind, targetId: string, m: Msg, extra: Partial<ActivityEvent> = {}): ActivityEvent {
+  return { id: newUid('a'), ts: Date.now(), kind, targetId, text: spanishText(m), msg: m, ...extra };
 }
 
 /**
@@ -397,11 +399,11 @@ class Ctx {
     this.touched.add(id);
   }
 
-  feed(kind: ActivityKind, targetId: string, text: string, extra: Partial<ActivityEvent> = {}): void {
-    this.events.push(event(kind, targetId, text, extra));
+  feed(kind: ActivityKind, targetId: string, m: Msg, extra: Partial<ActivityEvent> = {}): void {
+    this.events.push(event(kind, targetId, m, extra));
   }
 
-  tell(to: string[] | 'all', kind: NotificationKind, title: string, body?: string, data?: Record<string, string | number>): void {
+  tell(to: string[] | 'all', kind: NotificationKind, title: Msg, body?: Msg, data?: Record<string, string | number>): void {
     this.notify.push({ to, kind, title, ...(body ? { body } : {}), ...(data ? { data } : {}) });
   }
 
@@ -417,8 +419,8 @@ class Ctx {
     if (after > before) {
       const bonus = after * LEVEL_REWARD_PER_LEVEL;
       this.fx.push({ kind: 'levelup', id, level: after });
-      this.feed('levelup', id, `${e.name} subió a nivel ${after}`);
-      this.tell([id], 'levelup', `¡Subiste a nivel ${after}!`, `Premio de nivel: +${bonus} monedas. Revisa la tienda: hay cosas nuevas.`);
+      this.feed('levelup', id, msg('levelUp', { name: e.name, level: after }));
+      this.tell([id], 'levelup', msg('levelUpTitle', { level: after }), msg('levelUpBody', { bonus }));
       this.grant(id, bonus, false);
     }
   }
@@ -449,7 +451,7 @@ class Ctx {
         const next = { ...p, done: [...p.done, m.id] };
         this.patch(id, which === 'daily' ? { daily: next } : { weekly: next });
         this.grant(id, m.reward);
-        this.tell([id], 'mission', `Misión cumplida: ${m.label}`, `+${m.reward} monedas`, { icon: m.icon });
+        this.tell([id], 'mission', msg('missionDone', { id: m.id }), msg('coins', { n: m.reward }), { icon: m.icon });
         if (which === 'daily') this.bump(id, 'missions');
       }
     };
@@ -471,9 +473,8 @@ class Ctx {
           const wardrobe = a.cosmetic && !cur.wardrobe?.includes(a.cosmetic) ? [...(cur.wardrobe ?? []), a.cosmetic] : cur.wardrobe;
           this.patch(id, { achievements: [...(cur.achievements ?? []), a.id], wardrobe });
           this.fx.push({ kind: 'achievement', id, achievementId: a.id });
-          this.feed('achievement', id, `${firstName(cur)} desbloqueó el logro “${a.name}” ${a.icon}`);
-          const extra = a.cosmetic ? ` y ${COSMETIC_BY_ID[a.cosmetic]?.name ?? 'un adorno'} para tu personaje` : '';
-          this.tell([id], 'achievement', `Logro desbloqueado: ${a.name} ${a.icon}`, `${a.desc}. +${a.reward} monedas${extra}.`, { achievementId: a.id });
+          this.feed('achievement', id, msg('achievement', { name: firstName(cur), id: a.id }));
+          this.tell([id], 'achievement', msg('achievementTitle', { id: a.id }), msg('achievementBody', { id: a.id }), { achievementId: a.id });
           this.grant(id, a.reward);
         }
       }
@@ -493,39 +494,38 @@ const MAX_MEETING_MIN = 8 * 60;
 export function applyAction(state: GameState, actorId: string, a: Action): Outcome {
   const fail = (message: string): Outcome => ({ state, result: { ok: false, message }, fx: [], notify: [] });
   const me = state.employees[actorId];
-  if (me === undefined) return fail('Inicia sesión primero.');
+  if (me === undefined) return fail(L('Inicia sesión primero.', 'Log in first.'));
   const c = new Ctx(state);
   const ok = (message: string) => c.finish({ ok: true, message });
 
   switch (a.type) {
     case 'award': {
       const target = state.employees[a.targetId];
-      if (target === undefined) return fail('Colaborador no encontrado.');
-      if (!canAward(me, target)) return fail('No tienes permiso para registrar desempeño de esta persona.');
+      if (target === undefined) return fail(L('Colaborador no encontrado.', 'Team member not found.'));
+      if (!canAward(me, target)) return fail(L('No tienes permiso para registrar desempeño de esta persona.', "You don't have permission to log performance for this person."));
       const def = AWARDS.find((d) => d.id === a.awardId);
       const coins = def?.coins ?? Math.round(a.customCoins ?? 0);
-      if (!(coins > 0 && coins <= 500)) return fail('El monto debe estar entre 1 y 500 monedas.');
-      const label = def?.label ?? 'Reconocimiento especial';
+      if (!(coins > 0 && coins <= 500)) return fail(L('El monto debe estar entre 1 y 500 monedas.', 'The amount must be between 1 and 500 coins.'));
       const teamBefore = teamCoinsToday(state.feed);
       c.grant(target.id, coins);
       c.bump(target.id, 'awarded');
-      const detail = a.note.trim() ? ` — “${a.note.trim()}”` : '';
-      c.feed('award', target.id, `${target.name} ganó ${coins} por ${label}${detail}`, { actorId: me.id, amount: coins });
-      c.tell([target.id], 'award', `${label} (+${coins})`, `${me.name} registró tu logro${detail}`);
+      const note = a.note.trim();
+      c.feed('award', target.id, msg('award', { name: target.name, coins, award: a.awardId, note }), { actorId: me.id, amount: coins });
+      c.tell([target.id], 'award', msg('awardTitle', { award: a.awardId, coins }), msg('awardBody', { by: me.name, note }));
       // Meta del equipo: al cruzar el 100 % de productividad, todos ganan.
       if (teamBefore < TEAM_DAILY_TARGET && teamBefore + coins >= TEAM_DAILY_TARGET) {
         for (const id of Object.keys(c.s.employees)) c.grant(id, TEAM_GOAL_REWARD);
-        c.feed('team', target.id, `¡El equipo llegó a la meta del día! +${TEAM_GOAL_REWARD} monedas para todos`);
-        c.tell('all', 'team', '¡Meta del equipo cumplida! 🎉', `La productividad llegó al 100 %. +${TEAM_GOAL_REWARD} monedas para todos.`);
+        c.feed('team', target.id, msg('teamGoal', { coins: TEAM_GOAL_REWARD }));
+        c.tell('all', 'team', msg('teamGoalTitle'), msg('teamGoalBody', { coins: TEAM_GOAL_REWARD }));
       }
-      return ok(`+${coins} monedas para ${firstName(target)}`);
+      return ok(L(`+${coins} monedas para ${firstName(target)}`, `+${coins} coins for ${firstName(target)}`));
     }
 
     case 'kudos': {
       const to = state.employees[a.toId];
-      if (to === undefined) return fail('Colaborador no encontrado.');
-      if (me.id === to.id) return fail('Los reconocimientos son para tus compañeros.');
-      if (kudosLeft(me) <= 0) return fail(`Ya diste tus ${KUDOS_PER_DAY} reconocimientos de hoy.`);
+      if (to === undefined) return fail(L('Colaborador no encontrado.', 'Team member not found.'));
+      if (me.id === to.id) return fail(L('Los reconocimientos son para tus compañeros.', 'Recognitions are for your coworkers.'));
+      if (kudosLeft(me) <= 0) return fail(L(`Ya diste tus ${KUDOS_PER_DAY} reconocimientos de hoy.`, `You already gave your ${KUDOS_PER_DAY} recognitions today.`));
       const date = today();
       c.patch(me.id, { kudosGiven: { date, count: (me.kudosGiven.date === date ? me.kudosGiven.count : 0) + 1 } });
       c.grant(to.id, KUDOS_COINS);
@@ -534,15 +534,15 @@ export function applyAction(state: GameState, actorId: string, a: Action): Outco
       c.fx.push({ kind: 'kudos', from: me.id, to: to.id });
       c.bump(me.id, 'kudos');
       c.bump(to.id, 'kudosRecv');
-      const msg = a.message.trim();
-      c.feed('kudos', to.id, `${firstName(me)} reconoció a ${firstName(to)}${msg ? `: “${msg}”` : ''}`, { actorId: me.id, amount: KUDOS_COINS });
-      c.tell([to.id], 'kudos', `${me.name} te reconoció 💖`, msg || `+${KUDOS_COINS} monedas`, { fromId: me.id });
-      return ok(`Reconocimiento enviado a ${firstName(to)}`);
+      const message = a.message.trim();
+      c.feed('kudos', to.id, msg('kudos', { from: firstName(me), to: firstName(to), message }), { actorId: me.id, amount: KUDOS_COINS });
+      c.tell([to.id], 'kudos', msg('kudosTitle', { by: me.name }), message ? msg('raw', { text: message }) : msg('coins', { n: KUDOS_COINS }), { fromId: me.id });
+      return ok(L(`Reconocimiento enviado a ${firstName(to)}`, `Recognition sent to ${firstName(to)}`));
     }
 
     case 'checkIn': {
       const date = today();
-      if (me.lastCheckIn === date) return fail('Ya marcaste asistencia hoy.');
+      if (me.lastCheckIn === date) return fail(L('Ya marcaste asistencia hoy.', 'You already checked in today.'));
       const now = Date.now();
       const blocked = checkInBlockedReason(now);
       if (blocked !== null) return fail(blocked);
@@ -557,39 +557,39 @@ export function applyAction(state: GameState, actorId: string, a: Action): Outco
       c.bump(me.id, 'checkin');
       if (punctual) c.bump(me.id, 'punctual');
       const text = bonus
-        ? `${firstName(me)} lleva ${streak} días seguidos: bono de ${bonus}`
-        : `${firstName(me)} llegó a la oficina${punctual ? ' puntual ⏰' : ''} (racha: ${streak})`;
+        ? msg('streakBonus', { name: firstName(me), streak, bonus })
+        : msg('checkIn', { name: firstName(me), punctual: punctual ? 1 : 0, streak });
       c.feed('checkin', me.id, text, { amount: total });
-      return ok(`+${total} monedas${punctual ? ' · ¡puntual!' : ''} · racha ${streak}`);
+      return ok(L(`+${total} monedas${punctual ? ' · ¡puntual!' : ''} · racha ${streak}`, `+${total} coins${punctual ? ' · on time!' : ''} · streak ${streak}`));
     }
 
     case 'claimBonus': {
-      if (me.bonusDate === today()) return fail('Ya cobraste el bono de hoy.');
-      if (!isWorkDay(today())) return fail('El bono diario es solo en días laborales.');
-      if (!missionStatus(me).daily.every((m) => m.done)) return fail('Completa las tres misiones del día primero.');
+      if (me.bonusDate === today()) return fail(L('Ya cobraste el bono de hoy.', 'You already claimed today\'s bonus.'));
+      if (!isWorkDay(today())) return fail(L('El bono diario es solo en días laborales.', 'The daily bonus is only on workdays.'));
+      if (!missionStatus(me).daily.every((m) => m.done)) return fail(L('Completa las tres misiones del día primero.', "Complete today's three missions first."));
       c.patch(me.id, { bonusDate: today() });
       c.grant(me.id, DAILY_BONUS);
-      c.feed('checkin', me.id, `${firstName(me)} completó sus misiones del día`, { amount: DAILY_BONUS });
-      return ok(`¡Misiones cumplidas! +${DAILY_BONUS} monedas`);
+      c.feed('checkin', me.id, msg('dailyDone', { name: firstName(me) }), { amount: DAILY_BONUS });
+      return ok(L(`¡Misiones cumplidas! +${DAILY_BONUS} monedas`, `Missions complete! +${DAILY_BONUS} coins`));
     }
 
     case 'openChest': {
-      if (!isWorkDay(today())) return fail('El cofre se abre en días laborales.');
-      if (me.chestDate === today()) return fail('Ya abriste el cofre de hoy. ¡Vuelve mañana!');
+      if (!isWorkDay(today())) return fail(L('El cofre se abre en días laborales.', 'The chest opens on workdays.'));
+      if (me.chestDate === today()) return fail(L('Ya abriste el cofre de hoy. ¡Vuelve mañana!', 'You already opened today\'s chest. Come back tomorrow!'));
       const reward = chestReward(me.id, today());
       c.patch(me.id, { chestDate: today() });
       c.grant(me.id, reward);
       c.bump(me.id, 'chest');
-      if (reward >= 50) c.feed('purchase', me.id, `${firstName(me)} encontró ${reward} monedas en el cofre diario 🧰`);
-      return ok(`🧰 ¡El cofre traía ${reward} monedas!`);
+      if (reward >= 50) c.feed('purchase', me.id, msg('chest', { name: firstName(me), coins: reward }));
+      return ok(L(`🧰 ¡El cofre traía ${reward} monedas!`, `🧰 The chest had ${reward} coins!`));
     }
 
     case 'buyItem': {
       const def = ITEM_BY_ID[a.itemId];
-      if (def === undefined || def.hidden) return fail('No disponible.');
+      if (def === undefined || def.hidden) return fail(L('No disponible.', 'Not available.'));
       const free = hasAllDecor(me);
-      if (!free && levelForXp(me.xp) < def.level) return fail(`Se desbloquea en nivel ${def.level}.`);
-      if (!free && me.coins < def.price) return fail(`Te faltan ${def.price - me.coins} monedas.`);
+      if (!free && levelForXp(me.xp) < def.level) return fail(unlocksAt(def.level));
+      if (!free && me.coins < def.price) return fail(missingCoins(def.price - me.coins));
       c.patch(me.id, {
         coins: free ? me.coins : me.coins - def.price,
         inventory: { ...me.inventory, [a.itemId]: (me.inventory[a.itemId] ?? 0) + 1 },
@@ -597,33 +597,33 @@ export function applyAction(state: GameState, actorId: string, a: Action): Outco
       c.fx.push({ kind: 'purchase', id: me.id, itemId: def.id });
       if (!free) {
         c.bump(me.id, 'purchase');
-        c.feed('purchase', me.id, `${firstName(me)} compró ${def.name}`, { amount: -def.price });
+        c.feed('purchase', me.id, msg('bought', { name: firstName(me), item: def.id }), { amount: -def.price });
       }
-      return ok(free ? `${def.name} quedó en tu bodega.` : `${def.name} quedó en tu bodega. ¡A decorar!`);
+      return ok(free ? L(`${def.name} quedó en tu bodega.`, `${def.name} is in your storage.`) : L(`${def.name} quedó en tu bodega. ¡A decorar!`, `${def.name} is in your storage. Time to decorate!`));
     }
 
     case 'buyFloor': {
       const def = FLOOR_BY_ID[a.floorId];
-      if (def === undefined || def.roomOnly) return fail('No disponible.');
+      if (def === undefined || def.roomOnly) return fail(L('No disponible.', 'Not available.'));
       if (me.ownedFloors.includes(a.floorId)) return applyAction(state, actorId, { type: 'setFloor', floorId: a.floorId });
       const free = hasAllDecor(me);
-      if (!free && levelForXp(me.xp) < def.level) return fail(`Se desbloquea en nivel ${def.level}.`);
-      if (!free && me.coins < def.price) return fail(`Te faltan ${def.price - me.coins} monedas.`);
+      if (!free && levelForXp(me.xp) < def.level) return fail(unlocksAt(def.level));
+      if (!free && me.coins < def.price) return fail(missingCoins(def.price - me.coins));
       c.patch(me.id, { coins: free ? me.coins : me.coins - def.price, ownedFloors: [...me.ownedFloors, a.floorId], floor: a.floorId });
       if (!free) {
         c.bump(me.id, 'purchase');
-        c.feed('purchase', me.id, `${firstName(me)} instaló piso de ${def.name.toLowerCase()}`, { amount: -def.price });
+        c.feed('purchase', me.id, msg('boughtFloor', { name: firstName(me), floor: def.id }), { amount: -def.price });
       }
-      return ok(`Instalado: ${def.name}.`);
+      return ok(L(`Instalado: ${def.name}.`, `Installed: ${def.name}.`));
     }
 
     case 'buyCosmetic': {
       const def = COSMETIC_BY_ID[a.cosmeticId];
-      if (def === undefined || def.special) return fail('No disponible.');
-      if (me.wardrobe?.includes(def.id)) return fail('Ya lo tienes en tu vestuario.');
+      if (def === undefined || def.special) return fail(L('No disponible.', 'Not available.'));
+      if (me.wardrobe?.includes(def.id)) return fail(L('Ya lo tienes en tu vestuario.', 'You already have it in your wardrobe.'));
       const free = hasAllDecor(me);
-      if (!free && levelForXp(me.xp) < def.level) return fail(`Se desbloquea en nivel ${def.level}.`);
-      if (!free && me.coins < def.price) return fail(`Te faltan ${def.price - me.coins} monedas.`);
+      if (!free && levelForXp(me.xp) < def.level) return fail(unlocksAt(def.level));
+      if (!free && me.coins < def.price) return fail(missingCoins(def.price - me.coins));
       // Se lo pone al tiro: es lo que uno quiere al comprarlo.
       c.patch(me.id, {
         coins: free ? me.coins : me.coins - def.price,
@@ -633,72 +633,72 @@ export function applyAction(state: GameState, actorId: string, a: Action): Outco
       c.fx.push({ kind: 'purchase', id: me.id, itemId: def.id });
       if (!free) {
         c.bump(me.id, 'purchase');
-        c.feed('purchase', me.id, `${firstName(me)} estrena ${def.name.toLowerCase()}`, { amount: -def.price });
+        c.feed('purchase', me.id, msg('boughtCosmetic', { name: firstName(me), cosmetic: def.id }), { amount: -def.price });
       }
-      return ok(`¡${def.name} puesto! Lo puedes cambiar en tu perfil.`);
+      return ok(L(`¡${def.name} puesto! Lo puedes cambiar en tu perfil.`, `${def.name} on! You can change it in your profile.`));
     }
 
     case 'setFloor': {
-      if (a.floorId !== 'sala' && !me.ownedFloors.includes(a.floorId)) return fail('Primero compra ese piso.');
+      if (a.floorId !== 'sala' && !me.ownedFloors.includes(a.floorId)) return fail(L('Primero compra ese piso.', 'Buy that floor first.'));
       c.patch(me.id, { floor: a.floorId });
-      return ok('Piso cambiado.');
+      return ok(L('Piso cambiado.', 'Floor changed.'));
     }
 
     case 'place': {
-      if ((me.inventory[a.itemId] ?? 0) <= 0) return fail('No tienes ese objeto en bodega.');
-      if (me.placed.some((p) => p.uid === a.uid)) return fail('Ese objeto ya está colocado.');
+      if ((me.inventory[a.itemId] ?? 0) <= 0) return fail(L('No tienes ese objeto en bodega.', "You don't have that item in storage."));
+      if (me.placed.some((p) => p.uid === a.uid)) return fail(L('Ese objeto ya está colocado.', 'That item is already placed.'));
       const placeErr = placeProblem(state, me, a.itemId, a.x, a.y, a.rot);
       if (placeErr !== null) return fail(placeErr);
       const inventory = { ...me.inventory, [a.itemId]: me.inventory[a.itemId] - 1 };
       if (inventory[a.itemId] === 0) delete inventory[a.itemId];
       c.patch(me.id, { inventory, placed: [...me.placed, { uid: a.uid, itemId: a.itemId, x: a.x, y: a.y, rot: a.rot }] });
       c.bump(me.id, 'decor');
-      return ok(`Listo, quedó en su lugar: ${ITEM_BY_ID[a.itemId].name}.`);
+      return ok(L(`Listo, quedó en su lugar: ${ITEM_BY_ID[a.itemId].name}.`, `Done, it's in place: ${ITEM_BY_ID[a.itemId].name}.`));
     }
 
     case 'move': {
       const item = me.placed.find((p) => p.uid === a.uid);
-      if (item === undefined) return fail('Objeto no encontrado.');
+      if (item === undefined) return fail(L('Objeto no encontrado.', 'Item not found.'));
       const moveErr = placeProblem(state, me, item.itemId, a.x, a.y, a.rot, a.uid);
       if (moveErr !== null) return fail(moveErr);
       c.patch(me.id, { placed: me.placed.map((p) => (p.uid === a.uid ? { ...p, x: a.x, y: a.y, rot: a.rot } : p)) });
       c.bump(me.id, 'decor');
-      return ok('Movido.');
+      return ok(L('Movido.', 'Moved.'));
     }
 
     case 'store': {
       const item = me.placed.find((p) => p.uid === a.uid);
-      if (item === undefined) return fail('Objeto no encontrado.');
+      if (item === undefined) return fail(L('Objeto no encontrado.', 'Item not found.'));
       c.patch(me.id, {
         placed: me.placed.filter((p) => p.uid !== a.uid),
         inventory: { ...me.inventory, [item.itemId]: (me.inventory[item.itemId] ?? 0) + 1 },
       });
-      return ok(`${ITEM_BY_ID[item.itemId]?.name ?? 'El objeto'} volvió a tu bodega.`);
+      return ok(L(`${ITEM_BY_ID[item.itemId]?.name ?? 'El objeto'} volvió a tu bodega.`, `${ITEM_BY_ID[item.itemId]?.name ?? 'The item'} went back to your storage.`));
     }
 
     case 'announceDecor':
-      c.feed('decor', me.id, `${firstName(me)} remodeló su puesto (estilo ${officeScore(me)})`);
-      return ok('Cambios guardados.');
+      c.feed('decor', me.id, msg('redecorated', { name: firstName(me), style: officeScore(me) }));
+      return ok(L('Cambios guardados.', 'Changes saved.'));
 
     case 'avatar': {
       for (const slot of ['hat', 'face', 'neck'] as const) {
         const id = a.avatar[slot];
         if (id === undefined) continue;
         const def = COSMETIC_BY_ID[id];
-        if (def === undefined || def.slot !== slot) return fail('Adorno no válido.');
-        if (!hasAllDecor(me) && !me.wardrobe?.includes(id)) return fail(`Primero consigue ${def.name}.`);
+        if (def === undefined || def.slot !== slot) return fail(L('Adorno no válido.', 'Invalid accessory.'));
+        if (!hasAllDecor(me) && !me.wardrobe?.includes(id)) return fail(L(`Primero consigue ${def.name}.`, `Get ${def.name} first.`));
       }
       const changed = JSON.stringify(a.avatar) !== JSON.stringify(me.avatar);
       c.patch(me.id, { avatar: a.avatar, avatarSet: true });
       if (changed && me.avatarSet) c.bump(me.id, 'avatar');
-      return ok('Avatar actualizado.');
+      return ok(L('Avatar actualizado.', 'Avatar updated.'));
     }
 
     case 'gift': {
-      if (!hasAllDecor(me)) return fail('Solo administración puede regalar.');
+      if (!hasAllDecor(me)) return fail(L('Solo administración puede regalar.', 'Only admins can give gifts.'));
       const to = state.employees[a.toId];
-      if (to === undefined) return fail('Colaborador no encontrado.');
-      if (to.id === me.id) return fail('Para ti, usa "Obtener".');
+      if (to === undefined) return fail(L('Colaborador no encontrado.', 'Team member not found.'));
+      if (to.id === me.id) return fail(L('Para ti, usa "Obtener".', 'For yourself, use "Get".'));
       const item = ITEM_BY_ID[a.itemId];
       const cosmetic = COSMETIC_BY_ID[a.itemId];
       const message = a.message.trim();
@@ -707,30 +707,30 @@ export function applyAction(state: GameState, actorId: string, a: Action): Outco
         c.patch(to.id, { inventory: { ...to.inventory, [item.id]: (to.inventory[item.id] ?? 0) + 1 } });
         name = item.name;
       } else if (cosmetic !== undefined) {
-        if (to.wardrobe?.includes(cosmetic.id)) return fail(`${firstName(to)} ya tiene ${cosmetic.name}.`);
+        if (to.wardrobe?.includes(cosmetic.id)) return fail(L(`${firstName(to)} ya tiene ${cosmetic.name}.`, `${firstName(to)} already has ${cosmetic.name}.`));
         c.patch(to.id, { wardrobe: [...(to.wardrobe ?? []), cosmetic.id] });
         name = cosmetic.name;
       } else {
-        return fail('No disponible.');
+        return fail(L('No disponible.', 'Not available.'));
       }
       c.fx.push({ kind: 'gift', from: me.id, to: to.id, itemId: item ? a.itemId : '' });
       c.bump(to.id, 'gift');
-      c.feed('gift', to.id, `${firstName(me)} le regaló ${name} a ${firstName(to)}`, { actorId: me.id });
-      c.tell([to.id], 'gift', `¡Recibiste un regalo: ${name}!`, message || undefined, {
+      c.feed('gift', to.id, msg('gave', { from: firstName(me), to: firstName(to), item: a.itemId }), { actorId: me.id });
+      c.tell([to.id], 'gift', msg('giftTitle', { item: a.itemId }), message ? msg('raw', { text: message }) : undefined, {
         itemId: a.itemId,
         fromId: me.id,
         kind: item ? 'item' : 'cosmetic',
       });
-      return ok(`Listo: le enviaste ${name} a ${firstName(to)}. Le llegará una notificación.`);
+      return ok(L(`Listo: le enviaste ${name} a ${firstName(to)}. Le llegará una notificación.`, `Done: you sent ${name} to ${firstName(to)}. They'll get a notification.`));
     }
 
     case 'scheduleMeeting': {
-      if (!canSchedule(me)) return fail('Solo jefaturas, gerencia y administración agendan reuniones.');
+      if (!canSchedule(me)) return fail(L('Solo jefaturas, gerencia y administración agendan reuniones.', 'Only team leads, management and admins can schedule meetings.'));
       const title = a.title.trim();
-      if (!title) return fail('Ponle un título a la reunión.');
-      if (!(a.start > Date.now() - 5 * 60_000)) return fail('La hora de inicio ya pasó.');
-      if (!(a.durationMin >= 5 && a.durationMin <= MAX_MEETING_MIN)) return fail('La duración debe estar entre 5 minutos y 8 horas.');
-      if ((state.meetings ?? []).some((m) => m.id === a.id)) return fail('Esa reunión ya existe.');
+      if (!title) return fail(L('Ponle un título a la reunión.', 'Give the meeting a title.'));
+      if (!(a.start > Date.now() - 5 * 60_000)) return fail(L('La hora de inicio ya pasó.', 'The start time has already passed.'));
+      if (!(a.durationMin >= 5 && a.durationMin <= MAX_MEETING_MIN)) return fail(L('La duración debe estar entre 5 minutos y 8 horas.', 'The duration must be between 5 minutes and 8 hours.'));
+      if ((state.meetings ?? []).some((m) => m.id === a.id)) return fail(L('Esa reunión ya existe.', 'That meeting already exists.'));
       const attendees = [...new Set(a.attendees.filter((id) => state.employees[id] !== undefined))];
       const meeting: Meeting = {
         id: a.id,
@@ -744,68 +744,68 @@ export function applyAction(state: GameState, actorId: string, a: Action): Outco
       };
       c.s = { ...c.s, meetings: [...pruneMeetings(c.s.meetings ?? []), meeting].sort((x, y) => x.start - y.start) };
       const when = meetingWhen(a.start);
-      c.feed('meeting', me.id, `${firstName(me)} agendó “${title}” para ${when}`);
-      c.tell(attendees.length ? attendees : 'all', 'meeting', `Nueva reunión: ${title}`, `${when} · sala de reuniones`, { meetingId: a.id });
-      return ok(`Reunión agendada para ${when}. Todos recibieron el aviso.`);
+      c.feed('meeting', me.id, msg('meetingScheduled', { name: firstName(me), title, start: a.start }));
+      c.tell(attendees.length ? attendees : 'all', 'meeting', msg('meetingNew', { title }), msg('meetingNewBody', { start: a.start }), { meetingId: a.id });
+      return ok(L(`Reunión agendada para ${when}. Todos recibieron el aviso.`, `Meeting scheduled for ${when}. Everyone was notified.`));
     }
 
     case 'startMeeting':
     case 'endMeeting':
     case 'cancelMeeting': {
       const m = (state.meetings ?? []).find((x) => x.id === a.id);
-      if (m === undefined) return fail('Reunión no encontrada.');
-      if (m.createdBy !== me.id && me.role !== 'admin') return fail('Solo quien la agendó o administración puede hacerlo.');
+      if (m === undefined) return fail(L('Reunión no encontrada.', 'Meeting not found.'));
+      if (m.createdBy !== me.id && me.role !== 'admin') return fail(L('Solo quien la agendó o administración puede hacerlo.', 'Only whoever scheduled it or an admin can do that.'));
       const people = m.attendees.length ? m.attendees : ('all' as const);
       if (a.type === 'startMeeting') {
-        if (m.status !== 'scheduled') return fail('La reunión no está pendiente.');
+        if (m.status !== 'scheduled') return fail(L('La reunión no está pendiente.', 'The meeting is not pending.'));
         setMeeting(c, { ...m, status: 'active', startedAt: Date.now() });
-        c.tell(people, 'meeting', `Comenzó la reunión: ${m.title}`, 'Todos a la sala de reuniones 🗓️', { meetingId: m.id });
-        return ok('Reunión iniciada: el equipo va a la sala.');
+        c.tell(people, 'meeting', msg('meetingStarted', { title: m.title }), msg('meetingStartedBody'), { meetingId: m.id });
+        return ok(L('Reunión iniciada: el equipo va a la sala.', 'Meeting started: the team is heading to the room.'));
       }
       if (a.type === 'cancelMeeting') {
-        if (m.status !== 'scheduled') return fail('Solo se cancelan reuniones pendientes.');
+        if (m.status !== 'scheduled') return fail(L('Solo se cancelan reuniones pendientes.', 'Only pending meetings can be cancelled.'));
         setMeeting(c, { ...m, status: 'cancelled' });
-        c.tell(people, 'meeting', `Se canceló la reunión: ${m.title}`, meetingWhen(m.start), { meetingId: m.id });
-        return ok('Reunión cancelada.');
+        c.tell(people, 'meeting', msg('meetingCancelled', { title: m.title }), msg('meetingTime', { start: m.start }), { meetingId: m.id });
+        return ok(L('Reunión cancelada.', 'Meeting cancelled.'));
       }
-      if (m.status !== 'active') return fail('La reunión no está en curso.');
+      if (m.status !== 'active') return fail(L('La reunión no está en curso.', 'The meeting is not in progress.'));
       setMeeting(c, { ...m, status: 'ended', endedAt: Date.now() });
       for (const id of m.present) {
         if (c.s.employees[id] === undefined) continue;
         c.grant(id, MEETING_REWARD);
         c.bump(id, 'meeting');
       }
-      c.feed('meeting', me.id, `Terminó la reunión “${m.title}” (${m.present.length} asistentes)`);
-      c.tell(m.present, 'meeting', `Terminó la reunión: ${m.title}`, `¡Gracias por asistir! +${MEETING_REWARD} monedas`, { meetingId: m.id });
-      return ok('Reunión terminada. Cada asistente recibió su premio.');
+      c.feed('meeting', me.id, msg('meetingFinished', { title: m.title, count: m.present.length }));
+      c.tell(m.present, 'meeting', msg('meetingEnded', { title: m.title }), msg('meetingEndedBody', { coins: MEETING_REWARD }), { meetingId: m.id });
+      return ok(L('Reunión terminada. Cada asistente recibió su premio.', 'Meeting ended. Each attendee got their reward.'));
     }
 
     case 'announce': {
-      if (me.role !== 'admin') return fail('Solo administración publica avisos.');
+      if (me.role !== 'admin') return fail(L('Solo administración publica avisos.', 'Only admins post announcements.'));
       const title = a.title.trim();
       const body = a.body.trim();
-      if (!title) return fail('El aviso necesita un título.');
-      if ((state.announcements ?? []).some((x) => x.id === a.id)) return fail('Ese aviso ya existe.');
+      if (!title) return fail(L('El aviso necesita un título.', 'The announcement needs a title.'));
+      if ((state.announcements ?? []).some((x) => x.id === a.id)) return fail(L('Ese aviso ya existe.', 'That announcement already exists.'));
       c.s = { ...c.s, announcements: [{ id: a.id, ts: Date.now(), by: me.id, title, body }, ...(c.s.announcements ?? [])].slice(0, ANNOUNCEMENTS_MAX) };
-      c.feed('announcement', me.id, `📢 Aviso: ${title}`);
+      c.feed('announcement', me.id, msg('announcement', { title }));
       // Quien lo publica ya lo leyó.
       const others = Object.keys(state.employees).filter((id) => id !== me.id);
-      c.tell(others, 'announcement', title, body || undefined, { announcementId: a.id, byId: me.id });
-      return ok('Aviso publicado: le aparece a todo el equipo.');
+      c.tell(others, 'announcement', msg('raw', { text: title }), body ? msg('raw', { text: body }) : undefined, { announcementId: a.id, byId: me.id });
+      return ok(L('Aviso publicado: le aparece a todo el equipo.', 'Announcement posted: the whole team will see it.'));
     }
 
     case 'deleteAnnouncement': {
-      if (me.role !== 'admin') return fail('Solo administración.');
+      if (me.role !== 'admin') return fail(L('Solo administración.', 'Admins only.'));
       c.s = { ...c.s, announcements: (c.s.announcements ?? []).filter((x) => x.id !== a.id) };
-      return ok('Aviso eliminado.');
+      return ok(L('Aviso eliminado.', 'Announcement deleted.'));
     }
 
     case 'contribute': {
       const fund = officeFund(state);
-      if (fund.level >= EXPANSIONS.length) return fail('¡La oficina ya está completa! Gracias por aportar.');
+      if (fund.level >= EXPANSIONS.length) return fail(L('¡La oficina ya está completa! Gracias por aportar.', 'The office is already complete! Thanks for contributing.'));
       const amount = Math.floor(a.amount);
-      if (!(amount >= 10)) return fail('El aporte mínimo es de 10 monedas.');
-      if (me.coins < amount) return fail(`Solo tienes ${me.coins} monedas.`);
+      if (!(amount >= 10)) return fail(L('El aporte mínimo es de 10 monedas.', 'The minimum contribution is 10 coins.'));
+      if (me.coins < amount) return fail(L(`Solo tienes ${me.coins} monedas.`, `You only have ${me.coins} coins.`));
       c.patch(me.id, { coins: me.coins - amount });
       const total = fund.total + amount;
       let level = fund.level;
@@ -819,12 +819,12 @@ export function applyAction(state: GameState, actorId: string, a: Action): Outco
       if (level > fund.level) {
         const room = ROOMS[EXPANSIONS[level - 1].room.id];
         c.fx.push({ kind: 'expansion', level });
-        c.feed('team', me.id, `🏗️ ¡La oficina creció! Se inauguró: ${room.name}`);
-        c.tell('all', 'team', `¡Nueva zona: ${room.name}! 🎉`, 'El equipo juntó el fondo de ampliación. ¡Ven a conocerla!', { expansion: level });
-        return ok(`¡Tu aporte completó la meta! Se construyó ${room.name}.`);
+        c.feed('team', me.id, msg('expansion', { room: room.id }));
+        c.tell('all', 'team', msg('expansionTitle', { room: room.id }), msg('expansionBody'), { expansion: level });
+        return ok(L(`¡Tu aporte completó la meta! Se construyó ${room.name}.`, `Your contribution hit the goal! ${room.name} was built.`));
       }
-      if (amount >= 100) c.feed('team', me.id, `${firstName(me)} aportó ${amount} monedas al fondo de ampliación 🏗️`);
-      return ok(`Aportaste ${amount} monedas. ¡Gracias por construir la oficina!`);
+      if (amount >= 100) c.feed('team', me.id, msg('contributed', { name: firstName(me), amount }));
+      return ok(L(`Aportaste ${amount} monedas. ¡Gracias por construir la oficina!`, `You contributed ${amount} coins. Thanks for building the office!`));
     }
   }
 }
@@ -837,18 +837,14 @@ export function officeFund(s: GameState): OfficeFund {
   return s.fund ?? EMPTY_FUND;
 }
 
-const meetingFormat = new Intl.DateTimeFormat('es-CL', {
-  timeZone: TIME_ZONE,
-  weekday: 'long',
-  day: 'numeric',
-  month: 'short',
-  hour: '2-digit',
-  minute: '2-digit',
-  hourCycle: 'h23',
-});
+export { meetingWhen };
 
-export function meetingWhen(ts: number): string {
-  return meetingFormat.format(ts).replace(/\./g, '');
+function unlocksAt(level: number): string {
+  return L(`Se desbloquea en nivel ${level}.`, `Unlocks at level ${level}.`);
+}
+
+function missingCoins(n: number): string {
+  return L(`Te faltan ${n} monedas.`, `You need ${n} more coins.`);
 }
 
 function setMeeting(c: Ctx, m: Meeting): void {
@@ -875,12 +871,12 @@ export function tickMeetings(state: GameState, online: Set<string>, now = Date.n
     const people = m.attendees.length ? m.attendees : ('all' as const);
     if (m.status === 'scheduled' && !m.reminded && m.start - now <= 10 * 60_000 && m.start > now) {
       setMeeting(c, { ...m, reminded: true });
-      c.tell(people, 'meeting', `En 10 minutos: ${m.title}`, 'Prepárate para ir a la sala de reuniones.', { meetingId: m.id });
+      c.tell(people, 'meeting', msg('meetingSoon', { title: m.title }), msg('meetingSoonBody'), { meetingId: m.id });
       changed = true;
     } else if (m.status === 'scheduled' && m.start <= now) {
       setMeeting(c, { ...m, status: 'active', startedAt: now });
-      c.tell(people, 'meeting', `Comenzó la reunión: ${m.title}`, 'Todos a la sala de reuniones 🗓️', { meetingId: m.id });
-      c.feed('meeting', m.createdBy, `Comenzó la reunión “${m.title}”`);
+      c.tell(people, 'meeting', msg('meetingStarted', { title: m.title }), msg('meetingStartedBody'), { meetingId: m.id });
+      c.feed('meeting', m.createdBy, msg('meetingBegan', { title: m.title }));
       changed = true;
     }
   }
@@ -926,19 +922,19 @@ export function addEmployee(
   body: 0 | 1,
 ): { state: GameState; result: Result; id?: string } {
   const fail = (message: string) => ({ state, result: { ok: false as const, message } });
-  if (state.employees[actorId]?.role !== 'admin') return fail('Solo administradores.');
-  if (!name.trim()) return fail('Falta el nombre.');
+  if (state.employees[actorId]?.role !== 'admin') return fail(L('Solo administradores.', 'Admins only.'));
+  if (!name.trim()) return fail(L('Falta el nombre.', 'The name is missing.'));
   const plot = freePlot(state, dept);
-  if (plot === null) return fail(`No quedan puestos libres en ${ROOMS[dept].name}.`);
+  if (plot === null) return fail(L(`No quedan puestos libres en ${ROOMS[dept].name}.`, `There are no free desks left in ${ROOMS[dept].name}.`));
   const id = newUid('e');
   const rnd = (n: number) => Math.floor(Math.random() * n);
   const avatar: Avatar = { body, skin: rnd(5), hair: rnd(8), hairStyle: rnd(5), shirt: rnd(9), pants: rnd(5), acc: rnd(4) };
-  const emp = makeEmployee(id, name.trim(), title.trim() || 'Colaborador', dept, role, plot, avatar);
+  const emp = makeEmployee(id, name.trim(), title.trim() || L('Colaborador', 'Team member'), dept, role, plot, avatar);
   const s = { ...state, employees: { ...state.employees, [id]: emp } };
-  const welcome = event('join', id, `¡${body === 1 ? 'Bienvenida' : 'Bienvenido'} ${emp.name} a ${ROOMS[dept].name}!`);
+  const welcome = event('join', id, msg('welcome', { name: emp.name, body, dept }));
   return {
     state: { ...s, feed: [welcome, ...s.feed].slice(0, FEED_MAX) },
-    result: { ok: true, message: `${emp.name} tiene puesto en ${ROOMS[dept].name}.` },
+    result: { ok: true, message: L(`${emp.name} tiene puesto en ${ROOMS[dept].name}.`, `${emp.name} now has a desk in ${ROOMS[dept].name}.`) },
     id,
   };
 }
@@ -951,21 +947,21 @@ export function editEmployee(
   edit: { name: string; title: string; role: Role },
 ): { state: GameState; result: Result } {
   const fail = (message: string) => ({ state, result: { ok: false as const, message } });
-  if (state.employees[actorId]?.role !== 'admin') return fail('Solo administradores.');
+  if (state.employees[actorId]?.role !== 'admin') return fail(L('Solo administradores.', 'Admins only.'));
   const e = state.employees[id];
-  if (e === undefined) return fail('Colaborador no encontrado.');
-  if (!edit.name.trim()) return fail('Falta el nombre.');
-  if (id === actorId && edit.role !== 'admin') return fail('No puedes quitarte el rol de administrador.');
+  if (e === undefined) return fail(L('Colaborador no encontrado.', 'Team member not found.'));
+  if (!edit.name.trim()) return fail(L('Falta el nombre.', 'The name is missing.'));
+  if (id === actorId && edit.role !== 'admin') return fail(L('No puedes quitarte el rol de administrador.', "You can't remove your own admin role."));
   const employees = { ...state.employees, [id]: { ...e, name: edit.name.trim(), title: edit.title.trim() || e.title, role: edit.role } };
-  return { state: { ...state, employees }, result: { ok: true, message: `Datos de ${edit.name.trim()} guardados.` } };
+  return { state: { ...state, employees }, result: { ok: true, message: L(`Datos de ${edit.name.trim()} guardados.`, `${edit.name.trim()}'s details saved.`) } };
 }
 
 export function removeEmployee(state: GameState, actorId: string, id: string): { state: GameState; result: Result } {
   const fail = (message: string) => ({ state, result: { ok: false as const, message } });
-  if (state.employees[actorId]?.role !== 'admin') return fail('Solo administradores.');
-  if (actorId === id) return fail('No puedes eliminarte a ti mismo.');
-  if (state.employees[id] === undefined) return fail('Colaborador no encontrado.');
+  if (state.employees[actorId]?.role !== 'admin') return fail(L('Solo administradores.', 'Admins only.'));
+  if (actorId === id) return fail(L('No puedes eliminarte a ti mismo.', "You can't remove yourself."));
+  if (state.employees[id] === undefined) return fail(L('Colaborador no encontrado.', 'Team member not found.'));
   const employees = { ...state.employees };
   delete employees[id];
-  return { state: { ...state, employees, feed: state.feed.filter((f) => f.targetId !== id) }, result: { ok: true, message: 'Colaborador eliminado.' } };
+  return { state: { ...state, employees, feed: state.feed.filter((f) => f.targetId !== id) }, result: { ok: true, message: L('Colaborador eliminado.', 'Team member removed.') } };
 }

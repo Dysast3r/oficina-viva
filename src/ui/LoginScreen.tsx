@@ -1,5 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { changePassword, login, logout, useSession } from '../data/store';
+import { L } from '../i18n';
+import { LangSwitch } from './common';
 
 const MIN_PASSWORD = 8;
 
@@ -10,12 +12,13 @@ export function LoginScreen() {
   return (
     <div className="login">
       <div className="login-card login-card-narrow">
+        <LangSwitch className="login-lang" />
         <h1 className="logo">
           OFICINA <span>VIVA</span>
         </h1>
-        <p className="login-sub">Tu desempeño se convierte en monedas. Tus monedas, en tu oficina soñada.</p>
-        {status === 'loading' && <p className="hint">Conectando…</p>}
-        {status === 'in' && <p className="hint">Cargando tu oficina…</p>}
+        <p className="login-sub">{L('Tu desempeño se convierte en monedas. Tus monedas, en tu oficina soñada.', 'Your performance turns into coins. Your coins, into your dream office.')}</p>
+        {status === 'loading' && <p className="hint">{L('Conectando…', 'Connecting…')}</p>}
+        {status === 'in' && <p className="hint">{L('Cargando tu oficina…', 'Loading your office…')}</p>}
         {status === 'out' && <LoginForm />}
         {status === 'mustChange' && user && <NewPasswordForm username={user.username} />}
       </div>
@@ -41,7 +44,7 @@ function LoginForm() {
   return (
     <form className="login-form" onSubmit={submit}>
       <label className="field-label" htmlFor="login-user">
-        Usuario
+        {L('Usuario', 'Username')}
       </label>
       <input
         id="login-user"
@@ -49,13 +52,13 @@ function LoginForm() {
         autoComplete="username"
         autoCapitalize="none"
         spellCheck={false}
-        placeholder="nombre.apellido"
+        placeholder={L('nombre.apellido', 'first.last')}
         value={username}
         onChange={(e) => setUsername(e.target.value)}
         autoFocus
       />
       <label className="field-label" htmlFor="login-pass">
-        Contraseña
+        {L('Contraseña', 'Password')}
       </label>
       <input
         id="login-pass"
@@ -71,9 +74,9 @@ function LoginForm() {
         </p>
       )}
       <button className="btn btn-primary btn-block" disabled={busy || !username.trim() || !password}>
-        {busy ? 'Entrando…' : 'Entrar'}
+        {busy ? L('Entrando…', 'Logging in…') : L('Entrar', 'Log in')}
       </button>
-      <p className="hint">¿Olvidaste tu contraseña? Pídele a administración que la restablezca.</p>
+      <p className="hint">{L('¿Olvidaste tu contraseña? Pídele a administración que la restablezca.', 'Forgot your password? Ask an admin to reset it.')}</p>
     </form>
   );
 }
@@ -88,8 +91,8 @@ export function NewPasswordForm({ username, onDone }: { username: string; onDone
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
-    if (next.length < MIN_PASSWORD) return setError(`Usa al menos ${MIN_PASSWORD} caracteres.`);
-    if (next !== repeat) return setError('Las contraseñas nuevas no coinciden.');
+    if (next.length < MIN_PASSWORD) return setError(L(`Usa al menos ${MIN_PASSWORD} caracteres.`, `Use at least ${MIN_PASSWORD} characters.`));
+    if (next !== repeat) return setError(L('Las contraseñas nuevas no coinciden.', "The new passwords don't match."));
     setBusy(true);
     setError('');
     const r = await changePassword(current, next);
@@ -102,19 +105,21 @@ export function NewPasswordForm({ username, onDone }: { username: string; onDone
     <form className="login-form" onSubmit={submit}>
       {forced && (
         <p className="login-q">
-          Hola, <b>{username}</b>. Crea tu contraseña para entrar.
+          {L('Hola, ', 'Hi, ')}
+          <b>{username}</b>
+          {L('. Crea tu contraseña para entrar.', '. Create your password to log in.')}
         </p>
       )}
       <label className="field-label" htmlFor="pw-current">
-        {forced ? 'Contraseña temporal' : 'Contraseña actual'}
+        {forced ? L('Contraseña temporal', 'Temporary password') : L('Contraseña actual', 'Current password')}
       </label>
       <input id="pw-current" className="input" type="password" autoComplete="current-password" value={current} onChange={(e) => setCurrent(e.target.value)} />
       <label className="field-label" htmlFor="pw-next">
-        Nueva contraseña
+        {L('Nueva contraseña', 'New password')}
       </label>
       <input id="pw-next" className="input" type="password" autoComplete="new-password" value={next} onChange={(e) => setNext(e.target.value)} />
       <label className="field-label" htmlFor="pw-repeat">
-        Repite la nueva contraseña
+        {L('Repite la nueva contraseña', 'Repeat the new password')}
       </label>
       <input id="pw-repeat" className="input" type="password" autoComplete="new-password" value={repeat} onChange={(e) => setRepeat(e.target.value)} />
       {error && (
@@ -123,11 +128,11 @@ export function NewPasswordForm({ username, onDone }: { username: string; onDone
         </p>
       )}
       <button className="btn btn-primary btn-block" disabled={busy || !current || !next || !repeat}>
-        {busy ? 'Guardando…' : forced ? 'Guardar y entrar' : 'Cambiar contraseña'}
+        {busy ? L('Guardando…', 'Saving…') : forced ? L('Guardar y entrar', 'Save and log in') : L('Cambiar contraseña', 'Change password')}
       </button>
       {forced && (
         <button type="button" className="btn btn-block" onClick={logout}>
-          Volver
+          {L('Volver', 'Back')}
         </button>
       )}
     </form>
