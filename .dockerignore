@@ -1,0 +1,9 @@
+node_modules
+dist
+server/data
+.playwright-mcp
+.git
+*.log
+Dockerfile
+docker-compose.yml
+deploy

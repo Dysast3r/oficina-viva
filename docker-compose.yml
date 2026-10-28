@@ -1,0 +1,19 @@
+services:
+  app:
+    build: .
+    image: oficina-viva
+    container_name: oficina-viva
+    restart: unless-stopped
+    # 4480 en el equipo para no chocar con `npm run dev` (4460). Cámbialo con APP_PORT=xxxx.
+    ports:
+      - "${APP_PORT:-4480}:4460"
+    environment:
+      PUBLIC_URL: "${PUBLIC_URL:-http://localhost:4480}"
+      # Detrás de un proxy con https, descomenta para que la cookie de sesión
+      # salga marcada como Secure y el límite de intentos vea la IP real.
+      # TRUST_PROXY: "1"
+    volumes:
+      - oficina-viva-data:/data
+
+volumes:
+  oficina-viva-data:
